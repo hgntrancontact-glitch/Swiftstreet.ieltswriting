@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swiftstreet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--black:#111;--gray:#444;--muted:#888;--border:#ddd;--light:#f5f5f5;--white:#fff;--red:#cc0000;--gold:#f5a623;--orange:#ffa500;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Montserrat',sans-serif;font-weight:400;background:var(--white);color:var(--black);font-size:15px;line-height:1.6;}
+    input,textarea,button,select{font-family:inherit;}
+    .hidden{display:none!important;}
+    .btn{padding:13px 28px;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.8px;text-transform:uppercase;border-radius:2px;transition:all 0.15s;}
+    .btn:hover{opacity:0.82;}.btn:disabled{opacity:0.32;cursor:not-allowed;}
+    .btn:active:not(:disabled){transform:scale(0.95);filter:brightness(0.88);}
+    .btn-black{background:var(--black);color:#fff;}
+    .btn-white{background:#fff;color:var(--black);border:2px solid var(--black);}
+    .btn-red{background:var(--red);color:#fff;}
+    .err-msg{background:#fff0f0;border-left:3px solid var(--red);color:var(--red);padding:10px 14px;font-size:13px;margin-bottom:14px;border-radius:2px;}
+    .field-wrap{position:relative;margin-bottom:14px;}
+    .field-wrap input,.field-wrap select,.field-wrap textarea{width:100%;padding:13px 46px 13px 16px;border:1.5px solid var(--border);border-radius:2px;font-size:14px;font-weight:300;outline:none;transition:border-color 0.2s;background:#fff;}
+    .field-wrap input:focus,.field-wrap select:focus,.field-wrap textarea:focus{border-color:var(--black);}
+    .field-wrap input.field-error{border-color:var(--red);}
+    .field-err-text{font-size:11px;color:var(--red);font-weight:400;margin-top:3px;display:none;}
+    .field-err-text.show{display:block;}
+    .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;display:flex;align-items:center;}
+    .eye-btn svg{width:20px;height:20px;fill:none;stroke:var(--black);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    @keyframes pulse-red{0%,100%{opacity:1;}50%{opacity:0.35;}}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+    .star-btn{background:none;border:none;cursor:pointer;font-size:17px;padding:2px 5px;line-height:1;transition:transform 0.15s;}
+    .star-btn:hover{transform:scale(1.2);}
+    .star-btn.starred{filter:none;}
+    .star-btn:not(.starred){filter:grayscale(1);opacity:0.35;}
+
+    /* LOADING */
+    #loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;color:#fff;}
+    #loading-overlay.show{display:flex;}
+    .big-spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,0.15);border-top-color:#fff;border-radius:50%;animation:spin 0.9s linear infinite;}
+    #loading-overlay p{font-size:16px;font-weight:700;}
+    #loading-overlay small{font-size:12px;font-weight:300;color:#aaa;}
+
+    /* AUTH */
+    #auth-ui{min-height:100vh;display:flex;flex-direction:column;}
+    /* Brand bar: flex with safe spacing so Make Money btn never overlaps brand */
+    .brand-bar{background:var(--black);color:#fff;display:flex;align-items:center;justify-content:center;gap:16px;padding:14px 24px;position:relative;flex-wrap:wrap;}
+    .brand-bar img{height:52px;width:auto;object-fit:contain;flex-shrink:0;}
+    .brand-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+    .brand-name{font-size:28px;font-weight:900;letter-spacing:2px;text-transform:uppercase;line-height:1;}
+    .brand-by{font-size:11px;font-weight:400;font-style:normal;color:var(--orange);letter-spacing:0.5px;margin-top:2px;}
+    /* Make Money button: absolute on desktop, relative on mobile */
+    .make-money-btn{position:absolute;right:24px;top:50%;transform:translateY(-50%);background:rgba(255,165,0,0.15);border:1px solid var(--orange);color:var(--orange);padding:8px 14px;font-size:11px;font-weight:700;border-radius:20px;cursor:pointer;letter-spacing:0.5px;text-transform:uppercase;transition:all 0.2s;font-family:'Montserrat',sans-serif;white-space:nowrap;}
+    .make-money-btn:hover{background:var(--orange);color:#000;}
+    .auth-body{display:flex;flex:1;}
+    .auth-left{flex:6;background:var(--black);color:#fff;padding:48px 44px;display:flex;flex-direction:column;align-items:center;gap:28px;}
+    .auth-left h2{font-size:22px;font-weight:700;text-align:center;line-height:1.35;}
+    .video-wrap{width:100%;max-width:540px;border-radius:4px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+    .video-wrap iframe{width:100%;height:300px;border:none;display:block;}
+    .features{list-style:none;width:100%;max-width:520px;}
+    .features li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px;font-weight:300;color:#ccc;}
+    .features li::before{content:"-> ";color:#fff;font-weight:700;}
+    .auth-right{flex:4;background:#fff;padding:48px 40px;display:flex;flex-direction:column;align-items:center;min-width:320px;}
+    .form-box{width:100%;max-width:380px;}
+    .form-box h3{font-size:20px;font-weight:700;margin-bottom:6px;}
+    .form-divider{height:2px;background:var(--black);width:40px;margin-bottom:22px;}
+    .link-switch{margin-top:16px;font-size:12px;font-weight:300;color:var(--muted);text-align:center;}
+    .link-switch a{color:var(--black);font-weight:700;cursor:pointer;text-decoration:underline;}
+
+    /* Bank info section in register */
+    .bank-toggle{margin:14px 0 10px;padding:12px 14px;background:var(--light);border-radius:4px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;border:1px solid var(--border);}
+    .bank-section{display:none;border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:14px;background:var(--light);}
+    .bank-section.show{display:block;}
+    .bank-section p{font-size:11px;font-weight:300;color:var(--muted);margin-bottom:10px;line-height:1.5;font-style:italic;}
+
+    /* ── PAYMENT PAGE ──────────────────────────────────────────
+       Image 1 specs:
+       - No ref code: "PLEASE PAY 150,000 VND" màu đỏ nhấp nháy nhẹ
+       - With ref code:
+           PLEASE PAY 150,000 VND - NOW 120,000 VND
+           "150,000 VND" đen gạch ngang
+           "PLEASE PAY & - NOW 120,000 VND" màu đỏ
+           PLEASE PAY 150,000 VND - NOW 120,000 VND nhấp nháy nhẹ
+           A 30,000 VND discount has been applied with your referral code
+    ───────────────────────────────────────────────────────── */
+    .pay-box{text-align:center;width:100%;max-width:380px;}
+    .pay-box h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+    .pay-sub{font-size:12px;font-weight:300;color:var(--muted);margin-bottom:16px;}
+    .pay-price-wrap{margin-bottom:10px;}
+
+    /* No referral code */
+    #pay-no-ref{display:block;}
+    .pay-please-label{font-size:13px;font-weight:700;color:var(--black);margin-bottom:4px;}
+    .pay-amount-blink{font-size:24px;font-weight:900;color:var(--red);animation:pulse-red 1.8s ease-in-out infinite;}
+
+    /* With referral code — hidden by default via inline style in HTML */
+    .pay-discount-badge{font-size:11px;font-weight:600;color:#155724;background:#d4edda;padding:4px 12px;border-radius:12px;display:inline-block;margin-bottom:10px;}
+    .pay-ref-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;animation:pulse-red 1.8s ease-in-out infinite;}
+    .pay-ref-prefix{font-size:13px;font-weight:700;color:var(--red);}
+    .pay-ref-strike-amount{font-size:20px;font-weight:900;color:var(--black);text-decoration:line-through;}
+    .pay-ref-dash{font-size:18px;font-weight:700;color:var(--red);}
+    .pay-ref-now-label{font-size:13px;font-weight:700;color:var(--red);}
+    .pay-ref-now-amount{font-size:24px;font-weight:900;color:var(--red);}
+
+    .pay-lifetime{font-size:11px;font-weight:300;color:var(--muted);margin:8px 0 14px;}
+    .qr-wrap{border:1px solid var(--border);border-radius:4px;overflow:hidden;margin:0 auto;max-width:240px;}
+    .qr-wrap img{width:100%;display:block;}
+    .pay-note{font-size:12px;font-weight:300;color:var(--gray);line-height:1.75;text-align:left;background:var(--light);border-left:3px solid var(--black);padding:12px 14px;margin-top:14px;border-radius:2px;}
+
+    /* ── FLOATING SF ─────────────────────────────────────── */
+    #sf-float{position:fixed;bottom:16px;right:16px;z-index:8000;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+    #sf-toggle{background:var(--black);color:#fff;border:none;border-radius:30px;padding:10px 18px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.5px;box-shadow:0 4px 16px rgba(0,0,0,0.28);transition:all 0.2s;opacity:0.85;}
+    #sf-toggle:hover{opacity:1;}
+    #sf-toggle svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.3s;}
+    #sf-toggle.open svg{transform:rotate(90deg);}
+    #sf-menu{background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.18);overflow:hidden;display:none;flex-direction:column;min-width:220px;}
+    #sf-menu.show{display:flex;}
+    .sf-menu-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--light);}
+    .sf-menu-header span{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+    .sf-close{background:none;border:none;cursor:pointer;font-size:17px;color:var(--muted);padding:0 4px;}
+    .sf-item{padding:13px 16px;cursor:pointer;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+    .sf-item:last-child{border-bottom:none;}
+    .sf-item:hover{background:var(--light);}
+    .sf-item svg{width:17px;height:17px;fill:none;stroke:var(--black);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+
+    /* Try Demo: separate fixed button above sf-toggle, styled like Make Money gold */
+    /* Visible by default on auth page; hidden via JS when entering LMS */
+    #try-demo-btn{
+      background:rgba(255,165,0,0.15);border:1px solid var(--orange);color:var(--black);
+      padding:10px 18px;font-size:13px;font-weight:700;border-radius:30px;cursor:pointer;
+      font-family:'Montserrat',sans-serif;letter-spacing:0.5px;
+      box-shadow:0 4px 16px rgba(255,165,0,0.25);
+      animation:blink 2.2s ease-in-out infinite;transition:background 0.2s;
+    }
+    #try-demo-btn:hover{background:rgba(255,165,0,0.35);}
+    /* On mobile: push sf-float up so it doesn't cover content */
+    @media(max-width:960px){
+      #sf-float{bottom:80px;right:12px;}
+    }
+    /* Check button animation handled via onmousedown/onmouseup in HTML */
+
+    .sf-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;}
+    .sf-overlay.show{display:flex;}
+    .sf-overlay-card{background:#fff;border-radius:12px;width:540px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+    .sf-overlay-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);background:var(--black);border-radius:12px 12px 0 0;}
+    .sf-overlay-header h4{font-size:16px;font-weight:700;color:#fff;margin:0;}
+    .sf-overlay-close{background:none;border:none;cursor:pointer;color:#fff;font-size:20px;line-height:1;padding:0;}
+    .sf-overlay-body{padding:24px;}
+    .zalo-qr{width:200px;display:block;margin:0 auto 14px;border-radius:8px;border:1px solid var(--border);}
+    .zalo-sub{font-size:14px;font-weight:300;color:var(--muted);text-align:center;}
+    .fb-list{max-height:200px;overflow-y:auto;margin-bottom:12px;border:1px solid var(--border);border-radius:2px;}
+    .fb-empty{font-size:12px;font-weight:300;color:var(--muted);text-align:center;padding:14px;}
+    .fb-item{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12px;position:relative;cursor:default;user-select:none;}
+    .fb-item:last-child{border-bottom:none;}
+    .fb-item .fb-name{font-weight:700;}
+    .fb-item .fb-date{font-size:10px;font-weight:300;color:var(--muted);margin-left:6px;}
+    .fb-item .fb-msg{font-weight:300;margin-top:3px;line-height:1.5;color:var(--gray);}
+    .fb-item .fb-del-btn{display:none;margin-top:5px;background:var(--red);color:#fff;border:none;padding:3px 10px;font-size:10px;font-weight:700;border-radius:2px;cursor:pointer;font-family:inherit;}
+    .fb-item.show-del .fb-del-btn{display:inline-block;}
+    .fb-form{display:flex;flex-direction:column;gap:8px;}
+    .fb-form input,.fb-form textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:2px;font-size:13px;font-weight:300;outline:none;font-family:inherit;}
+    .fb-form textarea{resize:vertical;min-height:64px;}
+    .fb-char{font-size:10px;color:var(--muted);text-align:right;margin-top:-4px;}
+    .fb-char.over{color:var(--red);font-weight:700;}
+    .faq-item{border-bottom:1px solid var(--border);}
+    .faq-q{padding:14px 0;cursor:pointer;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+    .faq-q:after{content:"+";font-size:18px;font-weight:300;color:var(--muted);}
+    .faq-item.open .faq-q:after{content:"−";}
+    .faq-a{font-size:13px;font-weight:300;color:var(--gray);line-height:1.7;padding:0 0 14px;display:none;}
+    .faq-item.open .faq-a{display:block;}
+
+    /* ── LMS ─────────────────────────────────────────────── */
+    #lms-ui{display:none;position:fixed;inset:0;flex-direction:row;z-index:100;}
+    .sidebar{width:230px;background:var(--black);color:#fff;display:flex;flex-direction:column;flex-shrink:0;}
+    .sidebar-logo{padding:20px;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .s-brand-wrap{display:flex;flex-direction:column;align-items:flex-start;}
+    .s-brand{font-size:16px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;line-height:1.2;color:#fff;}
+    .s-webapp{font-size:9px;font-weight:300;color:#aaa;letter-spacing:2px;text-transform:uppercase;display:block;}
+    .sidebar-nav{flex:1;padding:12px 0;}
+    .nav-item{padding:14px 20px;cursor:pointer;color:#888;font-size:14px;font-weight:400;display:flex;align-items:center;gap:10px;border-left:3px solid transparent;transition:all 0.15s;}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,0.04);}
+    .nav-item.active{color:#fff;background:rgba(255,255,255,0.07);border-left-color:#fff;}
+    .nav-item svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+    .sidebar-footer{padding:20px;border-top:1px solid rgba(255,255,255,0.08);}
+    /* LMS Image 1: Tên Users dưới Sign Out → XÓA. Chỉ còn Sign Out button. */
+    .main-content{flex:1;overflow-y:auto;padding:36px 40px;background:var(--light);position:relative;}
+    #bc-badge{position:absolute;top:20px;right:28px;text-align:right;line-height:1.2;}
+    #bc-badge .bc-name{font-size:15px;font-weight:600;color:var(--black);letter-spacing:0.8px;text-transform:uppercase;display:block;}
+    #bc-badge .bc-sub{display:block;margin-top:2px;}
+    #bc-badge .bc-ielts{font-size:11px;font-weight:200;color:var(--black);}
+    #bc-badge .bc-approx{font-size:11px;font-weight:200;color:var(--black);}
+    .view-section{display:none;}.view-section.active-view{display:block;}
+    .page-title{font-size:24px;font-weight:700;margin-bottom:24px;}
+    .stat-cards{display:flex;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+    .stat-card{flex:1;min-width:130px;background:#fff;border:1px solid var(--border);border-top:3px solid var(--black);padding:18px 22px;border-radius:2px;}
+    .stat-card .s-label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+    .stat-card .s-value{font-size:32px;font-weight:900;margin-top:4px;}
+    .chart-box{background:#fff;border:1px solid var(--border);padding:24px;margin-bottom:24px;border-radius:2px;}
+    .chart-box h4{font-size:14px;font-weight:700;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;}
+    .data-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);}
+    .data-table th{background:var(--black);color:#fff;padding:11px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+    .data-table td{padding:10px 13px;border-bottom:1px solid var(--border);font-size:13px;font-weight:300;vertical-align:middle;}
+    .data-table tr:last-child td{border-bottom:none;}
+    .wc-ok{color:#155724;font-weight:700;}.wc-low{color:var(--red);font-weight:700;}
+    .empty-state{text-align:center;padding:60px 24px;color:var(--muted);}
+    .empty-state .es-icon{font-size:40px;margin-bottom:10px;}
+    .empty-state p{font-size:14px;font-weight:300;}
+    .mode-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:var(--light);color:var(--black);border:1px solid var(--border);}
+    .subj-badge{display:inline-block;font-size:11px;font-weight:600;color:var(--gray);}
+
+    /* Modals */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;}
+    .modal-overlay.show{display:flex;}
+    .modal-card{background:#fff;width:560px;max-width:100%;max-height:92vh;overflow-y:auto;border-top:4px solid var(--black);padding:36px 40px;}
+    .modal-card.wide{width:760px;padding:0;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--black);cursor:pointer;text-decoration:underline;margin-bottom:20px;}
+    .modal-card h3{font-size:18px;font-weight:700;margin-bottom:20px;}
+    .details-row{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+    .details-row>div{flex:1;min-width:160px;}
+    .details-row label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px;}
+    .instruct-header{background:var(--black);color:#fff;padding:18px 32px;}
+    .instruct-header h3{font-size:18px;font-weight:700;margin-bottom:4px;}
+    .instruct-header p{font-size:12px;font-weight:300;color:#aaa;}
+    .instruct-body{padding:24px 32px;}
+    .instruct-list{list-style:none;margin:8px 0 14px;}
+    .instruct-list li{padding:5px 0;font-size:13px;font-weight:300;border-bottom:1px solid var(--border);}
+    .instruct-list li::before{content:"• ";font-weight:700;}
+    .instruct-warning{color:var(--red);font-size:13px;font-weight:700;margin:10px 0;}
+
+    /* ── UPLOAD ZONE + THUMBNAIL X BUTTON ────────────────────
+       Image 3: X button nằm ở góc trên bên phải của THUMBNAIL (preview),
+       không phải của dropzone. Dropzone và thumbnail tách biệt.
+    ──────────────────────────────────────────────────────── */
+    .upload-zone{border:2px dashed var(--border);border-radius:2px;padding:20px;text-align:center;cursor:pointer;background:var(--light);transition:border-color 0.2s;margin:10px 0;position:relative;}
+    .upload-zone:hover,.upload-zone.dragover{border-color:var(--black);}
+    .upload-zone input{display:none;}
+    .uz-label{font-size:13px;font-weight:700;color:var(--black);}
+    .uz-sub{font-size:11px;font-weight:300;color:var(--muted);margin-top:3px;}
+    .uz-ok{font-size:12px;font-weight:700;color:#155724;margin-top:5px;display:none;}
+    /* Preview wrap: position:relative so X button anchors to it */
+    .img-preview-wrap{display:none;position:relative;margin:8px 0 12px;display:inline-block;}
+    .img-preview-wrap img{max-height:130px;border:1px solid var(--border);border-radius:2px;display:block;}
+    /* X button: absolute on top-right of the thumbnail */
+    .img-remove-btn{position:absolute;top:-8px;right:-8px;background:var(--red);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:900;line-height:1;z-index:5;padding:0;box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+    .img-remove-btn.show{display:flex;}
+    /* Same for save-test thumbnail */
+    .st-preview-wrap{position:relative;margin:8px 0 12px;display:none;}
+    .st-preview-wrap img{max-height:120px;border:1px solid var(--border);border-radius:2px;display:block;}
+    .st-img-remove-btn{position:absolute;top:-8px;right:-8px;background:var(--red);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:900;line-height:1;z-index:5;padding:0;box-shadow:0 2px 6px rgba(0,0,0,0.3);}
+    .st-img-remove-btn.show{display:flex;}
+
+    #instruct-err{font-size:12px;color:var(--red);font-weight:700;margin-top:5px;display:none;}
+
+    /* Take Test mode cards */
+    .mode-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+    .mode-card{border:2px solid var(--border);border-radius:4px;padding:16px 20px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:14px;}
+    .mode-card:hover{border-color:var(--black);}
+    .mode-card.selected{border-color:var(--black);background:var(--black);color:#fff;}
+    .mode-card .mc-icon{font-size:22px;}
+    .mode-card .mc-title{font-size:15px;font-weight:700;}
+    .mode-card .mc-sub{font-size:12px;font-weight:300;color:var(--muted);margin-top:2px;}
+    .mode-card.selected .mc-sub{color:#aaa;}
+
+    /* Exam */
+    #exam-ui{position:fixed;inset:0;background:#fff;z-index:2000;display:none;flex-direction:column;}
+    #demo-banner{background:var(--orange);color:#000;text-align:center;padding:8px;font-size:13px;font-weight:700;flex-shrink:0;}
+    .exam-header{background:var(--black);color:#fff;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+    .eh-title{font-size:14px;font-weight:700;letter-spacing:0.5px;}
+    #exam-timer{font-size:20px;font-weight:900;background:#fff;color:var(--black);padding:4px 16px;border-radius:2px;letter-spacing:1px;}
+    #exam-timer.timer-red{color:var(--red);animation:pulse-red 1.2s ease-in-out infinite;}
+    .exam-body{display:flex;flex:1;overflow:hidden;}
+    .pane-q{width:48%;border-right:2px solid var(--light);overflow-y:auto;display:flex;flex-direction:column;background:#fafafa;}
+    .task-tabs{display:flex;border-bottom:2px solid var(--border);flex-shrink:0;}
+    .task-tab{flex:1;padding:13px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;background:#fff;border-bottom:3px solid transparent;transition:all 0.15s;color:var(--muted);}
+    .task-tab.active{color:var(--black);border-bottom-color:var(--black);}
+    .pane-q-content{flex:1;padding:20px;overflow-y:auto;}
+    .pane-q-content img{width:100%;height:auto;display:block;border-radius:2px;}
+    .no-img{font-size:13px;font-weight:300;color:var(--muted);text-align:center;padding:40px 0;}
+    .pane-a{flex:1;display:flex;flex-direction:column;padding:16px 20px;}
+    .a-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:8px;}
+    .exam-textarea{flex:1;padding:16px;font-size:14px;font-weight:300;line-height:1.75;border:1.5px solid var(--border);resize:none;outline:none;border-radius:2px;background:#fff;}
+    .exam-textarea:focus{border-color:var(--black);}
+    .exam-footer{height:46px;background:var(--light);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;font-size:13px;font-weight:300;color:var(--muted);flex-wrap:wrap;gap:4px;}
+    .exam-footer strong{font-weight:700;color:var(--black);}
+
+    /* Result */
+    #result-ui{position:fixed;inset:0;background:var(--light);z-index:3000;display:none;flex-direction:column;}
+    .result-header{background:var(--black);color:#fff;padding:16px 32px;flex-shrink:0;}
+    .result-header h3{font-size:16px;font-weight:700;}
+    .result-header p{font-size:12px;font-weight:300;color:#aaa;margin-top:2px;}
+    .result-body{overflow-y:auto;flex:1;padding:28px 24px;max-width:860px;margin:0 auto;width:100%;}
+    .r-card{background:#fff;border:1px solid var(--border);border-top:3px solid var(--black);padding:24px 28px;margin-bottom:18px;border-radius:2px;}
+    .wc-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
+    .wc-box{flex:1;min-width:120px;background:var(--light);border-radius:2px;padding:12px 16px;}
+    .wc-box .wc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);}
+    .wc-box .wc-val{font-size:28px;font-weight:900;margin-top:4px;}
+    .save-status{font-size:13px;font-weight:400;margin-top:10px;}
+    .save-ok{color:#155724;}.save-err{color:var(--red);}
+    .r-actions{display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap;}
+
+    /* ── MAKE MONEY ──────────────────────────────────────── */
+    .mm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9500;display:none;align-items:center;justify-content:center;padding:20px;}
+    .mm-overlay.show{display:flex;}
+    .mm-card{background:#fff;border-radius:12px;width:620px;max-width:100%;max-height:90vh;overflow-y:auto;}
+    /* Image 2 - 4.5: Fix overlapping on mobile — header uses flex-wrap */
+    .mm-header{
+      background:linear-gradient(135deg,#111,#333);color:#fff;
+      padding:16px 20px;border-radius:12px 12px 0 0;
+      display:flex;justify-content:space-between;align-items:center;
+      flex-wrap:wrap;gap:10px;
+    }
+    .mm-header-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .mm-header-title{font-size:17px;font-weight:900;margin:0;color:#fff;white-space:nowrap;}
+    .mm-lang-toggle{display:flex;border:1px solid rgba(255,255,255,0.3);border-radius:16px;overflow:hidden;flex-shrink:0;}
+    .mm-lang-btn{padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;background:transparent;border:none;color:rgba(255,255,255,0.6);font-family:inherit;transition:all 0.15s;}
+    .mm-lang-btn.active{background:rgba(255,255,255,0.2);color:#fff;}
+    .mm-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;}
+    /* Image 2 - 4.3: "Guide" → "Instructional video" */
+    .mm-tabs{display:flex;border-bottom:2px solid var(--border);}
+    .mm-tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;border-bottom:3px solid transparent;transition:all 0.15s;color:var(--muted);}
+    .mm-tab.active{color:var(--black);border-bottom-color:var(--orange);}
+    .mm-body{padding:24px;}
+    .mm-section{display:none;}.mm-section.active{display:block;}
+    .mm-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+    .mm-desc{font-size:13px;font-weight:300;color:var(--gray);line-height:1.7;margin-bottom:16px;}
+    .referral-code-box{background:var(--light);border:2px dashed var(--border);border-radius:4px;padding:16px;text-align:center;margin:14px 0;}
+    .referral-code-box .rc-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px;}
+    .referral-code-box .rc-code{font-size:24px;font-weight:900;letter-spacing:2px;color:var(--black);}
+    .referral-stats{display:flex;gap:12px;margin:14px 0;flex-wrap:wrap;}
+    .rs-box{flex:1;min-width:90px;background:var(--light);border-radius:4px;padding:12px;text-align:center;}
+    .rs-box .rs-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);}
+    .rs-box .rs-val{font-size:20px;font-weight:900;color:var(--black);margin-top:4px;}
+    .check-ref-wrap{display:flex;gap:8px;margin-bottom:12px;}
+    .check-ref-wrap input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:2px;font-size:13px;outline:none;font-family:inherit;}
+    .check-ref-wrap input:focus{border-color:var(--black);}
+    /* Image 2 - 4.1: Check button click animation scale 0.95 + darken */
+    .btn-check-anim{transition:transform 0.12s,filter 0.12s,background 0.12s;}
+    .btn-check-anim:active{transform:scale(0.95)!important;filter:brightness(0.78)!important;}
+    .ctv-note{font-size:12px;font-style:italic;color:var(--muted);background:var(--light);padding:10px 12px;border-radius:4px;margin-bottom:14px;line-height:1.6;}
+    .ctv-note span{color:var(--red);}
+    /* Image 2 - 4.2: Real-time validation for CTV name & phone */
+    .ctv-field-err{font-size:11px;color:var(--red);font-weight:600;margin-top:-10px;margin-bottom:8px;display:none;}
+    .ctv-field-err.show{display:block;}
+    /* Bank fields hidden until name+phone both valid */
+    #ctv-bank-fields{display:none;}
+    #btn-create-ctv{transition:all 0.2s;}
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media(max-width:960px){
+      .auth-body{flex-direction:column;}
+      .auth-left,.auth-right{flex:none;width:100%;padding:32px 24px;}
+      .video-wrap iframe{height:220px;}
+      /* Fix overlapping: Make Money button on mobile becomes relative */
+      .make-money-btn{position:static;transform:none;margin-top:6px;font-size:10px;padding:6px 12px;}
+      .brand-bar{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:10px;padding:12px 16px;}
+      /* Ensure content not hidden behind fixed buttons */
+      .auth-right{padding-bottom:140px;}
+    }
+    @media(max-width:640px){
+      #lms-ui{flex-direction:column;}
+      .sidebar{width:100%;height:auto;}
+      .sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;}
+      .nav-item{padding:12px 14px;border-left:none;border-bottom:3px solid transparent;font-size:12px;white-space:nowrap;}
+      .nav-item.active{border-bottom-color:#fff;border-left:none;}
+      .sidebar-footer{padding:10px 16px;}
+      .main-content{padding:20px 16px;}
+      .exam-body{flex-direction:column;}
+      .pane-q{width:100%;max-height:42vh;border-right:none;border-bottom:2px solid var(--border);}
+      .result-body,.r-card{padding:18px 14px;}
+      .modal-card{padding:22px 18px;}
+      .modal-card.wide{padding:0;}
+      .instruct-body{padding:18px;}
+      .instruct-header{padding:14px 18px;}
+      .auth-right{padding-bottom:140px;}
+      #sf-float{bottom:12px;right:12px;}
+      #sf-toggle{font-size:11px;padding:8px 14px;opacity:0.75;}
+      .mm-header{padding:12px 14px;}
+      .mm-tab{font-size:11px;padding:10px 4px;}
+    }
+  </style>
+</head>
+<body>
+<div id="loading-overlay">
+  <div class="big-spinner"></div>
+  <p id="load-text">Processing...</p>
+  <small id="load-sub">Please do not close this page</small>
+</div>
+
+<!-- AUTH -->
+<div id="auth-ui">
+  <div class="brand-bar">
+    <img src="https://drive.google.com/thumbnail?id=1mjfnIKT8YPqrbIlCRUbywSJW9CXL0Rfw&sz=w200" alt="Logo">
+    <div class="brand-wrap">
+      <div class="brand-name">Swiftstreet</div>
+      <div class="brand-by">by Tran Hong Nam</div>
+    </div>
+    <button class="make-money-btn" onclick="openMM()">💰 Make Money</button>
+  </div>
+  <div class="auth-body">
+    <div class="auth-left">
+      <h2 id="auth-headline">Practice IELTS Writing Like the Real Exam</h2>
+      <div class="video-wrap">
+        <iframe src="https://drive.google.com/file/d/1hh5M5iC7OLP9Xz0YHRbsmeIlnS7TKbqK/preview" allowfullscreen></iframe>
+      </div>
+      <ul class="features">
+        <li id="feat-1">Interface simulates British Council ~90-95%</li>
+        <li id="feat-2">Last 5-10 minutes creates real exam pressure</li>
+        <li id="feat-3">Upload any exam paper and practice as if it's real</li>
+        <li id="feat-4">Dashboard to track your writing progress</li>
+        <li id="feat-5">Submission history — review your past attempts easily</li>
+        <li id="feat-6">Lifetime access — one payment, use forever</li>
+      </ul>
+    </div>
+    <div class="auth-right">
+      <!-- EN/VI toggle: inline, căn phải -->
+      <div style="width:100%;max-width:380px;display:flex;justify-content:flex-end;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;overflow:hidden;border-radius:4px;border:0.5px solid #ccc;">
+          <button id="global-lang-en" onclick="setGlobalLang('en')" style="padding:2px 8px;font-size:9px;font-weight:600;background:#333;color:#fff;border:none;border-right:0.5px solid #ccc;cursor:pointer;font-family:'Montserrat',sans-serif;line-height:1.6;">EN</button>
+          <button id="global-lang-vi" onclick="setGlobalLang('vi')" style="padding:2px 8px;font-size:9px;font-weight:600;background:transparent;color:#999;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;line-height:1.6;">VI</button>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="reg-form" class="form-box">
+        <h3>Create Account</h3>
+        <div class="form-divider"></div>
+        <div id="reg-err" class="err-msg hidden"></div>
+        <div class="field-wrap">
+          <input type="text" id="r-name" placeholder="Full name (e.g. Nguyen Van A)" oninput="validateName()" onblur="validateName()">
+          <div class="field-err-text" id="err-name">Please enter your full name (first and last).</div>
+        </div>
+        <div class="field-wrap">
+          <input type="text" id="r-phone" placeholder="Phone number (e.g. 0901234567)" oninput="validatePhone()" onblur="validatePhoneFull()">
+          <div class="field-err-text" id="err-phone">Please enter a valid 10-digit Vietnamese phone number.</div>
+        </div>
+        <div class="field-wrap">
+          <input type="password" id="r-pass" placeholder="Password (e.g. Tracy123)" oninput="validatePass()">
+          <button type="button" class="eye-btn" onclick="toggleEye('r-pass','eye-r')">
+            <svg id="eye-r" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <div class="field-err-text" id="err-pass">Min 6 chars, must include 1 uppercase and 1 number.</div>
+        </div>
+        <div class="field-wrap">
+          <input type="text" id="r-ref" placeholder="Referral code (optional)" oninput="checkRefCode()">
+          <div id="ref-status" style="font-size:11px;margin-top:3px;"></div>
+        </div>
+        <!-- Bank section: tự hiện khi password hợp lệ -->
+        <div class="bank-section" id="bank-section" style="display:none;">
+          <p style="font-size:11px;font-weight:600;color:var(--black);margin-bottom:10px;">💳 Add bank info to receive referral commission (optional)</p>
+          <div class="field-wrap" style="margin-bottom:10px"><input type="text" id="r-bank" placeholder="Bank name (e.g. Vietcombank)"></div>
+          <div class="field-wrap" style="margin-bottom:10px"><input type="text" id="r-bank-account" placeholder="Account number"></div>
+          <div class="field-wrap" style="margin-bottom:0"><input type="text" id="r-bank-name" placeholder="Account holder name"></div>
+        </div>
+        <button id="btn-reg" class="btn btn-black" style="width:100%" onclick="doRegister()" disabled>Register &amp; Pay</button>
+        <p class="link-switch" id="reg-have-account">Already have an account? <a onclick="showForm('login')" id="reg-login-link">Log in</a></p>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="login-form" class="form-box hidden">
+        <h3 id="login-title">Log in</h3>
+        <div class="form-divider"></div>
+        <div id="login-err" class="err-msg hidden"></div>
+        <div class="field-wrap"><input type="text" id="l-phone" placeholder="Phone number"></div>
+        <div class="field-wrap">
+          <input type="password" id="l-pass" placeholder="Password">
+          <button type="button" class="eye-btn" onclick="toggleEye('l-pass','eye-l')">
+            <svg id="eye-l" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <button class="btn btn-black" id="btn-login" style="width:100%" onclick="doLogin()">Log in</button>
+        <p class="link-switch" id="login-no-account">Don't have an account? <a onclick="showForm('reg')" id="login-register-link">Register</a></p>
+        <p class="link-switch" style="margin-top:8px;"><a onclick="showForgotForm()" id="forgot-link" style="color:var(--muted);font-weight:400;font-size:11px;">Forgot password?</a></p>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div id="forgot-form" class="form-box hidden">
+        <h3 id="forgot-title">Forgot Password</h3>
+        <div class="form-divider"></div>
+        <p id="forgot-desc" style="font-size:12px;font-weight:300;color:var(--muted);margin-bottom:16px;">Enter your full name and registered phone number to retrieve your password.</p>
+        <div id="forgot-err" class="err-msg hidden"></div>
+        <div class="field-wrap"><input type="text" id="fg-name" placeholder="Full name"></div>
+        <div class="field-wrap"><input type="text" id="fg-phone" placeholder="Phone number"></div>
+        <button class="btn btn-black" id="btn-forgot" style="width:100%" onclick="doForgotPassword()">View Password</button>
+        <div id="forgot-result" style="display:none;margin-top:14px;background:#f0fff4;border-left:3px solid #4caf50;padding:12px 14px;border-radius:2px;">
+          <div id="forgot-pass-label" style="font-size:12px;color:var(--muted);margin-bottom:4px;">Your password:</div>
+          <div style="font-size:18px;font-weight:700;color:var(--black);letter-spacing:1px;" id="forgot-pass-display"></div>
+        </div>
+        <p class="link-switch" style="margin-top:16px;"><a onclick="showForm('login')" id="back-to-login">← Back to login</a></p>
+      </div>
+
+      <!-- PAYMENT — correct layout per spec -->
+      <div id="pay-form" class="form-box hidden">
+        <div class="pay-box">
+          <h3>Complete Payment</h3>
+          <p class="pay-sub">Transfer to activate your account</p>
+          <div class="pay-price-wrap">
+            <!-- No referral code: PLEASE PAY 150,000 VND màu đỏ nhấp nháy nhẹ -->
+            <div id="pay-no-ref">
+              <div class="pay-please-label">PLEASE PAY</div>
+              <div class="pay-amount-blink">150,000 VND</div>
+            </div>
+            <!-- With valid referral code:
+                 PLEASE PAY ~~150,000 VND~~ - NOW 120,000 VND  (blink, PLEASE PAY & dash & NOW đỏ, 150k đen gạch ngang)
+                 A 30,000 VND discount has been applied with your referral code
+            -->
+            <div id="pay-has-ref" style="display:none;">
+              <div class="pay-ref-row">
+                <span class="pay-ref-prefix">PLEASE PAY</span>
+                <span class="pay-ref-strike-amount">150,000 VND</span>
+                <span class="pay-ref-dash">-</span>
+                <span class="pay-ref-now-label">NOW</span>
+                <span class="pay-ref-now-amount">120,000 VND</span>
+              </div>
+              <div class="pay-discount-badge">A 30,000 VND discount has been applied with your referral code</div>
+            </div>
+          </div>
+          <div class="pay-lifetime">(Lifetime access)</div>
+          <div class="qr-wrap"><img src="https://drive.google.com/thumbnail?id=1jP0i7wwG8Sztc41QAqU6WPp2XbEmPJbc&sz=w600" alt="QR"></div>
+          <div class="pay-note">Please transfer the money using the information shown in the QR code above.<br><br>Once your payment is successful, click <strong>Log in</strong> after 5 minutes to access your account.</div>
+          <div id="pay-login-err" style="display:none;font-size:12px;color:var(--red);font-weight:600;margin-top:10px;padding:8px 12px;background:#fff0f0;border-left:3px solid var(--red);border-radius:2px;"></div>
+          <button id="btn-pay-login" class="btn btn-white" style="width:100%;margin-top:16px" onclick="doPaymentLogin()">Log in →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING SF -->
+<div id="sf-float">
+  <div id="sf-menu">
+    <div class="sf-menu-header"><span>Support &amp; Feedback</span><button class="sf-close" onclick="closeSF()">✕</button></div>
+    <div class="sf-item" onclick="openSFOverlay('sf-faq')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>FAQ
+    </div>
+    <div class="sf-item" onclick="openSFOverlay('sf-review')">
+      <svg viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5"/><polyline points="17 2 20 5 12 13"/></svg>Review for Swiftstreet
+    </div>
+    <div class="sf-item" onclick="openSFOverlay('sf-zalo')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Contact Zalo for support
+    </div>
+  </div>
+  <!-- Try Demo: separate button above sf-toggle, only on auth page, gold blink, no icon -->
+  <button id="try-demo-btn" onclick="openDemoMode()">Try Demo</button>
+  <button id="sf-toggle" onclick="toggleSF()">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Support &amp; Feedback
+  </button>
+</div>
+
+<!-- SF OVERLAYS -->
+<div class="sf-overlay" id="sf-faq" onclick="closeSFOverlay(event,'sf-faq')">
+  <div class="sf-overlay-card">
+    <div class="sf-overlay-header"><h4>FAQ</h4><button class="sf-overlay-close" onclick="closeSFOverlayById('sf-faq')">✕</button></div>
+    <div class="sf-overlay-body" id="faq-body"><p style="font-size:13px;color:var(--muted)">Loading...</p></div>
+  </div>
+</div>
+<div class="sf-overlay" id="sf-review" onclick="closeSFOverlay(event,'sf-review')">
+  <div class="sf-overlay-card">
+    <div class="sf-overlay-header"><h4>Review for Swiftstreet</h4><button class="sf-overlay-close" onclick="closeSFOverlayById('sf-review')">✕</button></div>
+    <div class="sf-overlay-body">
+      <p style="font-size:12px;font-weight:300;color:var(--gray);margin-bottom:14px;line-height:1.6;background:var(--light);padding:10px 12px;border-radius:4px;">Leave feedback to receive commission — only for registered Web app users. Each user earns once per feedback. Admin will confirm and pay within 24 hours.<br><strong>You will receive 10,000 VND for your feedback.</strong></p>
+      <div class="fb-list" id="fb-list"><div class="fb-empty">Loading reviews...</div></div>
+      <div class="fb-form" style="margin-top:14px">
+        <input type="text" id="fb-name" placeholder="Your name (optional)">
+        <textarea id="fb-msg" placeholder="Share your experience... (max 600 characters)" oninput="fbCharCount()"></textarea>
+        <div class="fb-char" id="fb-char">0 / 600</div>
+        <div class="field-err-text" id="err-fb-msg"></div>
+        <button class="btn btn-black" style="padding:11px;font-size:13px;width:100%;margin-top:6px" onclick="submitFeedback()">Submit Review</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sf-overlay" id="sf-zalo" onclick="closeSFOverlay(event,'sf-zalo')">
+  <div class="sf-overlay-card">
+    <div class="sf-overlay-header"><h4>Contact Zalo for support</h4><button class="sf-overlay-close" onclick="closeSFOverlayById('sf-zalo')">✕</button></div>
+    <div class="sf-overlay-body" style="text-align:center">
+      <img class="zalo-qr" src="https://drive.google.com/thumbnail?id=1jQOnTSasIthhVHCCIomzxPCIz93bgoV2&sz=w400" alt="Zalo QR">
+      <p class="zalo-sub">Scan QR code to contact us on Zalo</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAKE MONEY — Image 2: full EN/VI translation, tabs, validation, guide renamed -->
+<div class="mm-overlay" id="mm-overlay">
+  <div class="mm-card">
+    <div class="mm-header">
+      <div class="mm-header-left">
+        <p class="mm-header-title">💰 Make Money</p>
+        <div class="mm-lang-toggle">
+          <button class="mm-lang-btn active" id="mm-lang-en" onclick="setMMLang('en')">EN</button>
+          <button class="mm-lang-btn" id="mm-lang-vi" onclick="setMMLang('vi')">VI</button>
+        </div>
+      </div>
+      <button class="mm-close" onclick="closeMM()">✕</button>
+    </div>
+    <!-- Image 2 - 4.3: "Guide" → "Instructional video" -->
+    <div class="mm-tabs">
+      <div class="mm-tab active" onclick="switchMMTab('ctv')" id="mm-tab-ctv" data-en="Collaborator" data-vi="Cộng tác viên">Collaborator</div>
+      <div class="mm-tab" onclick="switchMMTab('feedback')" id="mm-tab-feedback" data-en="Feedback" data-vi="Feedback">Feedback</div>
+      <div class="mm-tab" onclick="switchMMTab('guide')" id="mm-tab-guide" data-en="Instructional video" data-vi="Video hướng dẫn">Instructional video</div>
+    </div>
+    <div class="mm-body">
+
+      <!-- CTV TAB -->
+      <div class="mm-section active" id="mm-ctv">
+        <div class="mm-title" id="mm-ctv-title">Collaborator (CTV)</div>
+        <div class="mm-desc" id="mm-ctv-desc">Share your referral code. When someone registers using your code, you earn commission:<br>• If you <strong>have a registered account</strong> on Swiftstreet Web app: earn <strong>70,000 VND/person</strong><br>• If you <strong>don't have an account</strong>: earn <strong>60,000 VND/person</strong></div>
+        <!-- Registered user view -->
+        <div id="mm-registered-view" class="hidden">
+          <div class="referral-code-box">
+            <div class="rc-label" id="mm-rc-label">Your referral code</div>
+            <div class="rc-code" id="my-ref-code">—</div>
+          </div>
+          <div class="referral-stats">
+            <div class="rs-box"><div class="rs-label" id="mm-stat-total-lbl">Total</div><div class="rs-val" id="rs-total">0đ</div></div>
+            <div class="rs-box"><div class="rs-label" id="mm-stat-pending-lbl">Pending</div><div class="rs-val" id="rs-pending" style="color:var(--red)">0đ</div></div>
+            <div class="rs-box"><div class="rs-label" id="mm-stat-paid-lbl">Received</div><div class="rs-val" id="rs-paid" style="color:#155724">0đ</div></div>
+          </div>
+        </div>
+        <!-- Guest view -->
+        <div id="mm-guest-view">
+          <div class="ctv-note" id="mm-ctv-note"><span>*</span>If you already registered a Swiftstreet Web app account, you don't need to create a referral code here. For higher commission (70K vs 60K), register an account. If you only want to earn without registering, create your referral code below.</div>
+          <p style="font-size:13px;font-weight:600;margin-bottom:12px" id="mm-create-label">Don't have an account? Create your referral code now:</p>
+          <!-- Image 2 - 4.2: Real-time validation: name must be Vietnamese full name, phone must be VN format -->
+          <div class="field-wrap" style="margin-bottom:6px">
+            <input type="text" id="ctv-name" placeholder="Full name" oninput="validateCTVName()" style="padding-right:16px">
+          </div>
+          <div class="ctv-field-err" id="err-ctv-name" id="mm-err-name-text">Please enter a valid Vietnamese full name (first &amp; last).</div>
+          <div class="field-wrap" style="margin-bottom:6px">
+            <input type="text" id="ctv-phone" placeholder="Phone number" oninput="validateCTVPhone()" style="padding-right:16px">
+          </div>
+          <div class="ctv-field-err" id="err-ctv-phone" id="mm-err-phone-text">Please enter a valid Vietnamese phone number.</div>
+          <!-- Bank fields: shown only after name+phone both valid -->
+          <div id="ctv-bank-fields">
+            <div class="field-wrap"><input type="text" id="ctv-bank" placeholder="Bank name" style="padding-right:16px"></div>
+            <div class="field-wrap"><input type="text" id="ctv-bank-account" placeholder="Account number" style="padding-right:16px"></div>
+            <div class="field-wrap"><input type="text" id="ctv-bank-name" placeholder="Account holder name" style="padding-right:16px"></div>
+          </div>
+          <div class="field-err-text" id="err-ctv" style="margin-bottom:8px"></div>
+          <button class="btn btn-black" id="btn-create-ctv" style="width:100%;padding:12px" onclick="createCollaboratorCode()" disabled>
+            <span id="mm-btn-create-text">Create referral code</span>
+          </button>
+          <div id="ctv-result" style="display:none;margin-top:14px">
+            <div style="font-size:13px;font-weight:700;color:#155724;text-align:center;margin-bottom:10px" id="ctv-success-msg">✓ Mã của bạn đã được tạo thành công!</div>
+            <div class="referral-code-box">
+              <div class="rc-label" id="mm-rc-label2">Your referral code</div>
+              <div class="rc-code" id="ctv-code-display">—</div>
+            </div>
+          </div>
+          <!-- Check commission -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+            <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px" id="mm-check-label">Check commission by code:</p>
+            <div class="check-ref-wrap">
+              <input type="text" id="check-ref-input" placeholder="Enter referral code" oninput="onCheckRefInput()">
+              <button class="btn btn-black" style="padding:10px 16px;font-size:12px;transition:transform 0.1s,filter 0.1s,background 0.1s;min-width:80px;" id="mm-btn-check"
+                onmousedown="this.style.transform='scale(0.95)';this.style.background='#333';this.style.filter='brightness(0.7)';"
+                onmouseup="this.style.transform='';this.style.background='';this.style.filter='';"
+                onmouseleave="this.style.transform='';this.style.background='';this.style.filter='';"
+                ontouchstart="this.style.transform='scale(0.95)';this.style.background='#333';this.style.filter='brightness(0.7)';"
+                ontouchend="this.style.transform='';this.style.background='';this.style.filter='';"
+                onclick="checkReferralStats()"><span id="mm-btn-check-text">Check</span></button>
+            </div>
+            <div id="check-ref-result" style="display:none">
+              <div id="check-ref-invalid" style="display:none;font-size:13px;color:var(--red);font-weight:700;margin-bottom:8px">Mã giới thiệu không đúng, vui lòng kiểm tra lại</div>
+              <div id="check-ref-valid-stats" style="display:none">
+                <div class="referral-stats">
+                  <div class="rs-box"><div class="rs-label" id="mm-cr-total-lbl">Total</div><div class="rs-val" id="cr-total">0đ</div></div>
+                  <div class="rs-box"><div class="rs-label" id="mm-cr-pending-lbl">Pending</div><div class="rs-val" id="cr-pending" style="color:var(--red)">0đ</div></div>
+                  <div class="rs-box"><div class="rs-label" id="mm-cr-paid-lbl">Received</div><div class="rs-val" id="cr-paid" style="color:#155724">0đ</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Find CTV referral code -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+            <p style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:0;">
+              <a onclick="toggleFindCTV()" style="cursor:pointer;color:var(--muted);text-decoration:underline;" id="mm-find-label">Quên mã giới thiệu?</a>
+            </p>
+            <div id="find-ctv-form" style="display:none;margin-top:10px;">
+              <div class="check-ref-wrap">
+                <input type="text" id="find-ctv-name" placeholder="Họ tên đầy đủ" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:2px;font-size:13px;outline:none;font-family:inherit;">
+              </div>
+              <div class="check-ref-wrap" style="margin-top:6px;">
+                <input type="text" id="find-ctv-phone" placeholder="Số điện thoại">
+                <button class="btn btn-black" style="padding:10px 16px;font-size:12px;" onclick="findCTVCode()" id="mm-btn-find">Tìm</button>
+              </div>
+              <div id="find-ctv-result" style="display:none;margin-top:8px;">
+                <div id="find-ctv-invalid" style="display:none;font-size:13px;color:var(--red);font-weight:700;">Không tìm thấy mã giới thiệu.</div>
+                <div id="find-ctv-valid" style="display:none;">
+                  <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Mã giới thiệu của bạn:</div>
+                  <div style="font-size:20px;font-weight:900;letter-spacing:2px;color:var(--black);" id="find-ctv-code-display">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEEDBACK TAB -->
+      <div class="mm-section" id="mm-feedback">
+        <div class="mm-title" id="mm-fb-title">Feedback Commission</div>
+        <div class="mm-desc" id="mm-fb-desc">Leave feedback to earn commission — only for registered Web app users who write a review in "Review for Swiftstreet". Each user earns commission only <strong>once</strong>. Admin will confirm and pay within 24 hours.<br><br>You will receive <strong>10,000 VND</strong> for your feedback when experiencing Swiftstreet Web app.</div>
+      </div>
+
+      <!-- GUIDE / INSTRUCTIONAL VIDEO TAB -->
+      <div class="mm-section" id="mm-guide">
+        <div class="mm-title" id="mm-guide-title">Instructional video</div>
+        <div style="background:var(--light);border-radius:4px;padding:24px;text-align:center;color:var(--muted);font-size:13px;font-weight:300" id="mm-guide-coming">Video coming soon.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- LMS -->
+<div id="lms-ui">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="s-brand-wrap">
+        <div class="s-brand">Swiftstreet</div>
+        <span class="s-webapp">Web App</span>
+      </div>
+      <!-- Referral code + bank info button -->
+      <div style="margin-top:10px;display:flex;align-items:center;gap:6px;" id="sidebar-ref-wrap">
+        <div style="flex:1;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.25);border-radius:6px;padding:5px 8px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:9px;color:#aaa;letter-spacing:0.5px;">Mã giới thiệu</span>
+          <span style="font-size:11px;font-weight:700;color:#ffa500;letter-spacing:1px;" id="sidebar-ref-code">—</span>
+        </div>
+        <button onclick="toggleBankPopup()" title="Cập nhật ngân hàng" style="background:none;border:none;color:#ffa500;font-size:20px;font-weight:300;cursor:pointer;padding:0;line-height:1;flex-shrink:0;">+</button>
+      </div>
+      <!-- Bank popup -->
+      <div id="bank-popup" style="display:none;margin-top:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;">
+        <div id="bank-display" style="display:none;">
+          <div style="font-size:10px;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Thông tin ngân hàng</div>
+          <div style="font-size:11px;color:#ccc;line-height:1.8;" id="bank-info-text"></div>
+          <button onclick="editBankInfo()" style="margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.2);color:#aaa;padding:4px 10px;font-size:10px;border-radius:4px;cursor:pointer;font-family:inherit;">✎ Chỉnh sửa</button>
+        </div>
+        <div id="bank-form-popup">
+          <div style="font-size:10px;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">Cập nhật ngân hàng</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <input type="text" id="pop-bank" placeholder="Tên ngân hàng" style="width:100%;padding:7px 8px;font-size:11px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;">
+            <input type="text" id="pop-bank-acc" placeholder="Số tài khoản" style="width:100%;padding:7px 8px;font-size:11px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;">
+            <input type="text" id="pop-bank-name" placeholder="Tên chủ tài khoản" style="width:100%;padding:7px 8px;font-size:11px;border-radius:4px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;outline:none;">
+            <div style="display:flex;gap:6px;margin-top:2px;">
+              <button onclick="saveBankInfo()" style="flex:1;padding:7px;font-size:11px;font-weight:700;background:#ffa500;color:#000;border:none;border-radius:4px;cursor:pointer;font-family:inherit;">Lưu</button>
+              <button onclick="toggleBankPopup()" style="padding:7px 10px;font-size:11px;background:none;border:1px solid rgba(255,255,255,0.2);color:#aaa;border-radius:4px;cursor:pointer;font-family:inherit;">Huỷ</button>
+            </div>
+          </div>
+          <div id="bank-save-ok" style="display:none;font-size:11px;color:#4caf50;margin-top:6px;font-weight:600;">✓ Đã lưu!</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" id="nav-dash" onclick="navTo('v-dash')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
+      </div>
+      <div class="nav-item" id="nav-exam" onclick="navTo('v-exam')">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Take Test
+      </div>
+      <div class="nav-item" id="nav-saved" onclick="navTo('v-saved')">
+        <svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Save Test
+      </div>
+      <div class="nav-item" id="nav-his" onclick="navTo('v-his')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="s-user" id="sidebar-name" style="margin-bottom:10px;font-size:13px;font-weight:600;color:var(--orange);text-align:left;word-break:break-word;"></div>
+      <button class="btn btn-white" style="width:100%;padding:10px;font-size:12px" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div id="bc-badge" style="display:flex;align-items:center;gap:10px;">
+      <div style="display:flex;flex-direction:column;overflow:hidden;border-radius:4px;border:0.5px solid #999;flex-shrink:0;">
+        <button id="lms-lang-en" onclick="setGlobalLang('en')" style="padding:2px 8px;font-size:9px;font-weight:700;border:none;border-bottom:0.5px solid #999;cursor:pointer;font-family:'Montserrat',sans-serif;line-height:1.6;background:#333;color:#fff;">EN</button>
+        <button id="lms-lang-vi" onclick="setGlobalLang('vi')" style="padding:2px 8px;font-size:9px;font-weight:700;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;line-height:1.6;background:transparent;color:#666;">VI</button>
+      </div>
+      <div style="text-align:right;">
+        <span class="bc-name" style="display:block;">British Council</span>
+        <span class="bc-sub"><span class="bc-ielts">IELTS Writing</span><span class="bc-approx"> - Approximate</span></span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="v-dash" class="view-section active-view">
+      <div class="page-title">Dashboard</div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="s-label">Tests Taken</div><div class="s-value" id="stat-total">0</div></div>
+        <div class="stat-card"><div class="s-label">Avg. Words</div><div class="s-value" id="stat-avg">—</div></div>
+        <div class="stat-card"><div class="s-label">Best Count</div><div class="s-value" id="stat-best">—</div></div>
+      </div>
+      <div class="chart-box">
+        <h4>Word Count Progress</h4>
+        <canvas id="prog-chart"></canvas>
+        <div id="chart-empty" class="empty-state hidden"><div class="es-icon">📈</div><p>Complete your first test to start tracking.</p></div>
+      </div>
+    </div>
+
+    <!-- TAKE TEST -->
+    <div id="v-exam" class="view-section">
+      <div class="page-title">Take a Test</div>
+      <p style="font-size:13px;font-weight:300;color:var(--muted);margin-bottom:20px">Choose your practice mode:</p>
+      <div class="mode-cards">
+        <div class="mode-card" id="mc-t1" onclick="selectMode('Task 1 only')">
+          <div class="mc-icon">📝</div>
+          <div><div class="mc-title">Task 1 Only</div><div class="mc-sub">Charts, graphs, maps, diagrams — 20 minutes</div></div>
+        </div>
+        <div class="mode-card" id="mc-t2" onclick="selectMode('Task 2 only')">
+          <div class="mc-icon">✍️</div>
+          <div><div class="mc-title">Task 2 Only</div><div class="mc-sub">Essay writing — 40 minutes</div></div>
+        </div>
+        <div class="mode-card" id="mc-both" onclick="selectMode('Task 1 & 2')">
+          <div class="mc-icon">📄</div>
+          <div><div class="mc-title">Task 1 &amp; 2</div><div class="mc-sub">Full exam simulation — 60 minutes</div></div>
+        </div>
+      </div>
+      <button class="btn btn-black" id="btn-start-exam" onclick="startExamFlow()" disabled style="font-size:14px;padding:15px 36px">Start New Test →</button>
+    </div>
+
+    <!-- SAVE TEST -->
+    <div id="v-saved" class="view-section">
+      <div class="page-title">Save Test</div>
+      <button class="btn btn-black" onclick="openSaveTestModal()" style="margin-bottom:20px;padding:10px 22px;font-size:13px">+ Save New Test</button>
+      <div id="saved-content"><div class="empty-state"><div class="es-icon">📌</div><p>No saved tests yet.</p></div></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="v-his" class="view-section">
+      <div class="page-title">Submission History</div>
+      <div id="history-content"><div class="empty-state"><div class="es-icon">📋</div><p>No submissions yet.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-card">
+    <span class="back-link" onclick="closeModal('modal-confirm')">← Back</span>
+    <h3>Confirm your details</h3>
+    <p style="font-size:13px;font-weight:300;color:var(--muted);margin-bottom:18px">If your details are not correct, please inform the invigilator.</p>
+    <div class="details-row">
+      <div><label>Full Name</label><div class="field-wrap" style="margin-bottom:0"><input type="text" id="c-name" placeholder="Enter your full name"></div></div>
+      <div><label>Date of Birth</label><div class="field-wrap" style="margin-bottom:0"><input type="date" id="c-dob"></div></div>
+    </div>
+    <div style="margin:12px 0 18px">
+      <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Candidate Number</label>
+      <div class="field-wrap" style="margin-bottom:0"><input type="text" id="c-num" placeholder="Optional"></div>
+    </div>
+    <button class="btn btn-black" onclick="confirmDetails()">My details are correct →</button>
+  </div>
+</div>
+
+<!-- MODAL: INSTRUCTIONS -->
+<div id="modal-instruct" class="modal-overlay">
+  <div class="modal-card wide">
+    <div style="padding:18px 28px 0"><span class="back-link" onclick="showModal('modal-confirm')">← Back</span></div>
+    <div class="instruct-header"><h3>IELTS Academic Writing</h3><p id="instruct-mode-label">Time: 1 hour</p></div>
+    <div class="instruct-body">
+      <p style="font-size:13px;font-weight:700;margin-bottom:8px">INSTRUCTIONS TO CANDIDATES</p>
+      <ul class="instruct-list"><li>Answer both parts.</li><li>You can change your answers at any time during the test.</li></ul>
+      <p style="font-size:13px;font-weight:700;margin-bottom:8px">INFORMATION FOR CANDIDATES</p>
+      <ul class="instruct-list"><li>There are two parts in this test.</li><li>Part 2 contributes twice as much as Part 1 to the writing score.</li><li>The test clock will show you when there are 10 minutes and 5 minutes remaining.</li></ul>
+      <div id="subject-fields" style="margin:14px 0">
+        <div id="subject-t1-wrap">
+          <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Subject Task 1 (optional)</label>
+          <div class="field-wrap" style="margin-bottom:10px"><select id="exam-subject-t1" style="padding:10px 14px;font-size:13px;font-weight:300;padding-right:16px;"></select></div>
+        </div>
+        <div id="subject-t2-wrap">
+          <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Subject Task 2 (optional)</label>
+          <div class="field-wrap" style="margin-bottom:10px"><select id="exam-subject-t2" style="padding:10px 14px;font-size:13px;font-weight:300;padding-right:16px;"></select></div>
+        </div>
+        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Description (optional)</label>
+        <div class="field-wrap" style="margin-bottom:0">
+          <textarea id="exam-desc" placeholder="Briefly describe this exam..." style="padding:10px 14px;font-size:13px;font-weight:300;min-height:56px;resize:vertical;border-radius:2px;"></textarea>
+        </div>
+      </div>
+      <div class="instruct-warning">You must upload your exam paper before you can start the test.</div>
+      <!-- Dropzone — no X button here -->
+      <div class="upload-zone" id="exam-upload-zone"
+           onclick="document.getElementById('exam-img').click()"
+           ondragover="examDragOver(event)" ondragleave="examDragLeave(event)" ondrop="examDrop(event)">
+        <input type="file" id="exam-img" accept="image/*" onchange="onImageSelected()">
+        <div class="uz-label">📎 Click to upload, drag &amp; drop, or Ctrl+V to paste</div>
+        <div class="uz-sub">JPG, PNG, WEBP</div>
+        <div class="uz-ok" id="img-ok">✓ Image loaded</div>
+      </div>
+      <div id="instruct-err">Please upload an exam image before starting.</div>
+      <!-- Image 3: X button trên góc trên phải của THUMBNAIL, không phải dropzone -->
+      <div class="img-preview-wrap" id="img-preview-wrap" style="display:none;">
+        <img id="img-preview-thumb" style="max-height:130px;border:1px solid var(--border);border-radius:2px;display:block;">
+        <button class="img-remove-btn show" id="img-remove-btn" onclick="removeExamImage(event)">✕</button>
+      </div>
+      <button class="btn btn-black" id="btn-start" onclick="startExamFromUpload()" style="width:100%;padding:14px;font-size:14px;margin-top:10px;" disabled>Start Test →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SAVE TEST -->
+<div id="modal-save-test" class="modal-overlay">
+  <div class="modal-card">
+    <span class="back-link" onclick="closeModal('modal-save-test')">← Back</span>
+    <h3>Save a Test</h3>
+    <div class="field-wrap">
+      <select id="st-mode" style="padding:12px 14px;font-size:14px;font-weight:300;" onchange="onSaveModeChange()">
+        <option value="">-- Select mode --</option>
+        <option>Task 1 only</option><option>Task 2 only</option><option>Task 1 &amp; 2</option>
+      </select>
+    </div>
+    <div id="st-subject-t1-wrap"><div class="field-wrap"><select id="st-subject-t1" style="padding:12px 14px;font-size:14px;font-weight:300;"><option value="">-- Subject Task 1 --</option></select></div></div>
+    <div id="st-subject-t2-wrap"><div class="field-wrap"><select id="st-subject-t2" style="padding:12px 14px;font-size:14px;font-weight:300;"><option value="">-- Subject Task 2 --</option></select></div></div>
+    <div class="field-wrap">
+      <textarea id="st-desc" placeholder="Description (optional)" style="padding:12px 14px;font-size:14px;font-weight:300;min-height:70px;resize:vertical;border-radius:2px;"></textarea>
+    </div>
+    <!-- Dropzone -->
+    <div class="upload-zone" id="st-upload-zone" onclick="document.getElementById('st-img').click()">
+      <input type="file" id="st-img" accept="image/*" onchange="onSaveTestImage()">
+      <div class="uz-label">📎 Upload exam paper image</div>
+      <div class="uz-sub">JPG, PNG, WEBP</div>
+      <div class="uz-ok" id="st-img-ok">✓ Image loaded</div>
+    </div>
+    <!-- Image 3: X button on thumbnail -->
+    <div class="st-preview-wrap" id="st-img-preview-wrap">
+      <img id="st-img-preview" style="max-height:120px;border:1px solid var(--border);border-radius:2px;display:block;">
+      <button class="st-img-remove-btn show" id="st-img-remove-btn" onclick="removeSaveTestImage(event)">✕</button>
+    </div>
+    <button class="btn btn-black" style="width:100%;padding:12px" onclick="doSaveTest()">Save Test</button>
+  </div>
+</div>
+
+<!-- MODAL: DETAIL -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-card" style="width:800px;max-width:98vw;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="margin:0">Detail</h3>
+      <button class="btn btn-white" onclick="closeModal('modal-detail')" style="padding:7px 14px;font-size:12px">✕ Close</button>
+    </div>
+    <div id="detail-meta" style="font-size:13px;font-weight:300;color:var(--muted);margin-bottom:18px;display:flex;gap:14px;flex-wrap:wrap"></div>
+    <div id="detail-img-wrap" style="display:none;margin-bottom:18px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Exam Paper</div>
+      <img id="detail-img" src="" style="max-width:100%;border:1px solid var(--border);border-radius:2px;display:block;">
+    </div>
+    <div style="margin-bottom:18px" id="detail-t1-wrap">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Task 1 Answer</div>
+      <div id="detail-task1" style="background:var(--light);border-radius:2px;padding:14px;font-size:13px;font-weight:300;line-height:1.8;white-space:pre-wrap;max-height:280px;overflow-y:auto;border:1px solid var(--border)"></div>
+    </div>
+    <div id="detail-t2-wrap">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Task 2 Answer</div>
+      <div id="detail-task2" style="background:var(--light);border-radius:2px;padding:14px;font-size:13px;font-weight:300;line-height:1.8;white-space:pre-wrap;max-height:280px;overflow-y:auto;border:1px solid var(--border)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM -->
+<div id="exam-ui">
+  <div id="demo-banner" class="hidden">🎯 DEMO MODE — Results will not be saved. <a href="#" onclick="exitDemo()" style="color:#000;font-weight:900;text-decoration:underline">Register now →</a></div>
+  <div class="exam-header">
+    <div class="eh-title">IELTS Academic Writing — <span id="exam-mode-label">Task 1 &amp; 2</span></div>
+    <div id="exam-timer">60:00</div>
+    <button class="btn btn-red" onclick="finishExam()" style="padding:8px 16px;font-size:12px">Finish Test</button>
+  </div>
+  <div class="exam-body">
+    <div class="pane-q">
+      <div class="task-tabs" id="task-tabs-wrap">
+        <div id="tab1" class="task-tab active" onclick="setTask(1)">Task 1</div>
+        <div id="tab2" class="task-tab" onclick="setTask(2)">Task 2</div>
+      </div>
+      <div class="pane-q-content">
+        <img id="q-img" src="" alt="Exam paper" style="display:none;">
+        <div id="q-no-img" class="no-img" style="display:none;">No image available.</div>
+      </div>
+    </div>
+    <div class="pane-a">
+      <div class="a-label">Writing Area — Task <span id="current-task-label">1</span></div>
+      <textarea id="ta-task1" class="exam-textarea" placeholder="Type your Task 1 answer here..." oninput="updateWordCount()"></textarea>
+      <textarea id="ta-task2" class="exam-textarea hidden" placeholder="Type your Task 2 answer here..." oninput="updateWordCount()"></textarea>
+    </div>
+  </div>
+  <div class="exam-footer">
+    <span>Word count: <strong id="wc-display">0</strong></span>
+    <span id="wc-guide">Min: <strong>150</strong> words</span>
+    <span>Auto-saved</span>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result-ui">
+  <div class="result-header"><h3>Test Ended — IELTS Academic Writing</h3><p>Your submission has been saved</p></div>
+  <div class="result-body">
+    <div class="r-card">
+      <div style="font-size:20px;font-weight:700;margin-bottom:6px">Your test has now ended.</div>
+      <div style="font-size:13px;font-weight:300;color:var(--muted);margin-bottom:16px">Well done! Your responses have been saved.</div>
+      <div class="wc-summary">
+        <div class="wc-box"><div class="wc-label">Task 1</div><div class="wc-val" id="r-wc1">0</div><div style="font-size:10px;color:var(--muted)">Min 150</div></div>
+        <div class="wc-box"><div class="wc-label">Task 2</div><div class="wc-val" id="r-wc2">0</div><div style="font-size:10px;color:var(--muted)">Min 250</div></div>
+        <div class="wc-box"><div class="wc-label">Total</div><div class="wc-val" id="r-wc-total">0</div></div>
+        <div class="wc-box"><div class="wc-label">Minutes</div><div class="wc-val" id="r-duration">—</div></div>
+      </div>
+      <div class="save-status" id="save-status"></div>
+    </div>
+    <div class="r-actions">
+      <button class="btn btn-black" onclick="goToHistory()">View History</button>
+      <button class="btn btn-white" onclick="doNewExam()">Take Another Test</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────
+var currentUser={name:'',phone:'',referralCode:''};
+var examImageSrc='',examMode='Task 1 & 2',savedTestImageSrc='';
+var timerInterval=null,progChart=null,currentTask=1,examStartTime=null;
+var historyData=[],savedTestsData=[],historyStars={};
+var vName=false,vPhone=false,vPass=false,dupPhone=false,refValid=true,_hasRef=false;
+var fbClickCount=0,fbClickTimer=null,sessionCheckInterval=null,isDemoMode=false,demoTimer=null;
+var mmLang='en';
+// CTV validation state
+var ctvNameOk=false,ctvPhoneOk=false;
+
+var SUBJECTS_T1=['Table','Bar Chart','Line Graph','Pie Chart','Map','Diagram','Process'];
+var SUBJECTS_T2=['Arts & Culture','Business & Economy','Education','Environment','Health','Science & Technology','Society','Space & Universe','Sport'];
+
+// ── MM TRANSLATION TABLE — 100% all strings ───────────────────────────────
+var MM={
+  en:{
+    tab_ctv:'Collaborator',tab_fb:'Feedback',tab_guide:'Instructional video',
+    ctv_title:'Collaborator (CTV)',
+    ctv_desc:'Share your referral code. When someone registers using your code, you earn commission:<br>• If you <strong>have a registered account</strong> on Swiftstreet Web app: earn <strong>70,000 VND/person</strong><br>• If you <strong>don\'t have an account</strong>: earn <strong>60,000 VND/person</strong>',
+    rc_label:'Your referral code',rc_label2:'Your referral code',
+    stat_total:'Total',stat_pending:'Pending',stat_paid:'Received',
+    ctv_note:'<span>*</span>If you already registered a Swiftstreet Web app account, you don\'t need to create a referral code here. For higher commission (70K vs 60K), register an account. If you only want to earn without registering, create your referral code below.',
+    create_label:'Don\'t have an account? Create your referral code now:',
+    name_ph:'Full name',phone_ph:'Phone number',
+    bank_ph:'Bank name',bank_acc_ph:'Account number',bank_name_ph:'Account holder name',
+    btn_create:'Create referral code',btn_creating:'Creating...',
+    success_msg:'✓ Your referral code has been created successfully!',
+    err_name:'Please enter a valid full name (first & last).',
+    err_phone:'Please enter a valid Vietnamese phone number.',
+    check_label:'Check commission by code:',
+    check_ph:'Enter referral code',btn_check:'Check',
+    invalid_code:'Invalid referral code, please check again.',
+    cr_total:'Total',cr_pending:'Pending',cr_paid:'Received',
+    fb_title:'Feedback Commission',
+    fb_desc:'Leave feedback to earn commission — only for registered Web app users who write a review in "Review for Swiftstreet". Each user earns commission only <strong>once</strong>. Admin will confirm and pay within 24 hours.<br><br>You will receive <strong>10,000 VND</strong> for your feedback.',
+    guide_title:'Instructional video',
+    guide_coming:'Video coming soon.'
+  },
+  vi:{
+    tab_ctv:'Cộng tác viên',tab_fb:'Feedback',tab_guide:'Video hướng dẫn',
+    ctv_title:'Cộng tác viên (CTV)',
+    ctv_desc:'Chia sẻ mã giới thiệu của bạn. Khi có người đăng ký bằng mã của bạn, bạn nhận hoa hồng:<br>• Nếu bạn <strong>đã đăng ký tài khoản</strong> Web app Swiftstreet: nhận <strong>70.000 VND/người</strong><br>• Nếu bạn <strong>chưa đăng ký tài khoản</strong>: nhận <strong>60.000 VND/người</strong>',
+    rc_label:'Mã giới thiệu của bạn',rc_label2:'Mã giới thiệu của bạn',
+    stat_total:'Tổng',stat_pending:'Chờ thanh toán',stat_paid:'Đã nhận',
+    ctv_note:'<span>*</span>Nếu bạn đã đăng ký tài khoản Web app Swiftstreet, bạn không cần tạo mã giới thiệu nữa. Nếu muốn hoa hồng cao hơn, hãy đăng ký tài khoản. Nếu không có nhu cầu đăng ký, bạn chỉ cần tạo mã giới thiệu tại đây.',
+    create_label:'Chưa có tài khoản? Tạo mã giới thiệu ngay:',
+    name_ph:'Họ và tên',phone_ph:'Số điện thoại',
+    bank_ph:'Tên ngân hàng',bank_acc_ph:'Số tài khoản',bank_name_ph:'Tên chủ tài khoản',
+    btn_create:'Tạo mã giới thiệu',btn_creating:'Đang tạo...',
+    success_msg:'✓ Mã của bạn đã được tạo thành công!',
+    err_name:'Vui lòng nhập họ tên đầy đủ (họ và tên).',
+    err_phone:'Vui lòng nhập số điện thoại Việt Nam hợp lệ.',
+    check_label:'Tra cứu hoa hồng theo mã:',
+    check_ph:'Nhập mã giới thiệu',btn_check:'Kiểm tra',
+    invalid_code:'Mã giới thiệu không đúng, vui lòng kiểm tra lại',
+    cr_total:'Tổng',cr_pending:'Chờ thanh toán',cr_paid:'Đã nhận',
+    fb_title:'Hoa hồng Feedback',
+    fb_desc:'Hãy Feedback để nhận hoa hồng — chỉ dành cho Users đã đăng ký Web app và viết Feedback tại mục "Review for Swiftstreet". Mỗi User kiếm hoa hồng duy nhất <strong>1 lần</strong>. Admin sẽ xác nhận và thanh toán trong vòng 24h.<br><br>Bạn sẽ nhận <strong>10.000 VND</strong> khi trải nghiệm Web app của Swiftstreet.',
+    guide_title:'Video hướng dẫn',
+    guide_coming:'Video sắp ra mắt.'
+  }
+};
+
+// ── SESSION ───────────────────────────────────────────────────────────────
+window.addEventListener('load',function(){
+  loadFeedback();
+  try{
+    var s=sessionStorage.getItem('sw_user');
+    if(s){currentUser=JSON.parse(s);if(currentUser&&currentUser.phone){enterLMS();return;}}
+  }catch(e){sessionStorage.removeItem('sw_user');}
+});
+document.addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image')!==-1){
+      var f=items[i].getAsFile();
+      var r=new FileReader();
+      r.onload=function(ev){setExamImage(ev.target.result);};
+      r.readAsDataURL(f);break;
+    }
+  }
+});
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function showLoading(t,s){document.getElementById('load-text').textContent=t||'Processing...';document.getElementById('load-sub').textContent=s||'Please do not close';document.getElementById('loading-overlay').classList.add('show');}
+function hideLoading(){document.getElementById('loading-overlay').classList.remove('show');}
+function showModal(id){document.querySelectorAll('.modal-overlay').forEach(function(m){m.classList.remove('show');});document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function toggleEye(iid,sid){var el=document.getElementById(iid),svg=document.getElementById(sid);if(el.type==='password'){el.type='text';svg.innerHTML='<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';}else{el.type='password';svg.innerHTML='<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';}}
+function setFieldError(id,eid,show,msg){var el=document.getElementById(id),err=document.getElementById(eid);if(show){el.classList.add('field-error');if(msg)err.textContent=msg;err.classList.add('show');}else{el.classList.remove('field-error');err.classList.remove('show');}}
+function countWords(t){var s=t.trim();return s?s.split(/\s+/).length:0;}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtMoney(n){return(n||0).toLocaleString('vi-VN')+'đ';}
+function showForm(type){
+  ['reg-form','login-form','pay-form','forgot-form'].forEach(function(id){var el=document.getElementById(id);if(el)el.classList.add('hidden');});
+  document.getElementById('reg-err').classList.add('hidden');
+  document.getElementById('login-err').classList.add('hidden');
+  if(type==='reg')document.getElementById('reg-form').classList.remove('hidden');
+  if(type==='login')document.getElementById('login-form').classList.remove('hidden');
+  if(type==='forgot'){var ff=document.getElementById('forgot-form');if(ff)ff.classList.remove('hidden');}
+  if(type==='pay'){
+    document.getElementById('pay-form').classList.remove('hidden');
+    var noRef=document.getElementById('pay-no-ref');
+    var hasRef=document.getElementById('pay-has-ref');
+    if(_hasRef){noRef.style.display='none';hasRef.style.display='block';}
+    else{noRef.style.display='block';hasRef.style.display='none';}
+  }
+}
+function showForgotForm(){
+  showForm('forgot');
+  var errEl=document.getElementById('forgot-err');if(errEl)errEl.classList.add('hidden');
+  var resEl=document.getElementById('forgot-result');if(resEl)resEl.style.display='none';
+  var fgn=document.getElementById('fg-name');if(fgn)fgn.value='';
+  var fgp=document.getElementById('fg-phone');if(fgp)fgp.value='';
+}
+function populateSubjects(sel,type){
+  var list=type==='t1'?SUBJECTS_T1:SUBJECTS_T2;
+  sel.innerHTML='<option value="">-- Select subject --</option>';
+  list.forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+}
+function toggleBankSection(){
+  var s=document.getElementById('bank-section');
+  if(s)s.classList.toggle('show');
+}
+
+// ── REGISTER VALIDATION ───────────────────────────────────────────────────
+function checkRegBtn(){document.getElementById('btn-reg').disabled=!(vName&&vPhone&&vPass&&!dupPhone&&refValid);}
+function validateName(){var v=document.getElementById('r-name').value.trim();vName=v.length>=2&&/\s/.test(v);if(v.length>0)setFieldError('r-name','err-name',!vName,'Please enter your full name.');checkRegBtn();}
+function validatePhone(){var v=document.getElementById('r-phone').value.trim();vPhone=/^(0[3-9][0-9]{8})$/.test(v);dupPhone=false;if(v.length>3)setFieldError('r-phone','err-phone',!vPhone,'Please enter a valid 10-digit Vietnamese phone number.');checkRegBtn();}
+function validatePhoneFull(){
+  var v=document.getElementById('r-phone').value.trim();
+  if(!/^(0[3-9][0-9]{8})$/.test(v))return;
+  google.script.run.withSuccessHandler(function(res){dupPhone=res.exists;setFieldError('r-phone','err-phone',res.exists,'This phone number is already registered.');checkRegBtn();}).checkDuplicate({field:'phone',value:v});
+}
+function validatePass(){
+  var v=document.getElementById('r-pass').value;
+  var ok=v.length>=6&&/[A-Z]/.test(v)&&/[0-9]/.test(v);
+  vPass=ok;
+  if(v.length>0)setFieldError('r-pass','err-pass',!ok,'Min 6 chars, 1 uppercase, 1 number.');
+  // Auto-show bank section khi password hợp lệ
+  var bankSection=document.getElementById('bank-section');
+  if(bankSection)bankSection.style.display=ok?'block':'none';
+  checkRegBtn();
+}
+
+// Referral code: empty=valid, invalid=red * + blocks btn, valid=show discount on payment page
+function checkRefCode(){
+  var v=document.getElementById('r-ref').value.trim();
+  var el=document.getElementById('ref-status');
+  var noRef=document.getElementById('pay-no-ref');
+  var hasRef=document.getElementById('pay-has-ref');
+  if(!v){
+    el.textContent='';refValid=true;_hasRef=false;
+    noRef.style.display='block';
+    hasRef.style.display='none';
+    checkRegBtn();return;
+  }
+  google.script.run.withSuccessHandler(function(res){
+    if(res.exists){
+      el.style.color='#155724';el.textContent='✓ Valid referral code — 30,000 VND discount applied!';
+      refValid=true;_hasRef=true;
+      noRef.style.display='none';
+      hasRef.style.display='block';
+    }else{
+      el.style.color='var(--red)';el.innerHTML='<span style="color:var(--red);font-weight:700">* </span>Invalid referral code.';
+      refValid=false;_hasRef=false;
+      noRef.style.display='block';
+      hasRef.style.display='none';
+    }
+    checkRegBtn();
+  }).checkDuplicate({field:'referral',value:v});
+}
+
+// REGISTER: Chỉ validate + lưu tạm vào JS, KHÔNG gọi GS registerUser
+// Chỉ khi nhấn Log in trên payment page mới lưu vào sheet
+function doRegister(){
+  var name=document.getElementById('r-name').value.trim();
+  var phone=document.getElementById('r-phone').value.trim();
+  var pass=document.getElementById('r-pass').value.trim();
+  var ref=document.getElementById('r-ref').value.trim();
+  if(ref&&!refValid){document.getElementById('reg-err').textContent='Invalid referral code. Please fix or clear it.';document.getElementById('reg-err').classList.remove('hidden');return;}
+  var bank=document.getElementById('r-bank').value.trim();
+  var bankAcc=document.getElementById('r-bank-account').value.trim();
+  var bankName=document.getElementById('r-bank-name').value.trim();
+  // Lưu tạm vào biến JS — CHƯA lưu vào Google Sheet
+  window._pendingReg={name:name,phone:phone,password:pass,referredBy:ref,bank:bank,bankAccount:bankAcc,bankName:bankName};
+  // Chuyển sang trang payment
+  showForm('pay');
+}
+
+// LOG IN trên payment page: chỉ lưu vào sheet → chuyển sang trang Login
+// Thông báo 5 phút CHỈ hiện ở trang Login, không hiện trên payment page
+function doPaymentLogin(){
+  var errEl=document.getElementById('pay-login-err');
+  if(errEl)errEl.style.display='none';
+  if(!window._pendingReg){
+    showForm('login');return;
+  }
+  var reg=window._pendingReg;
+  var btn=document.getElementById('btn-pay-login');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Processing...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      btn.disabled=false;btn.innerHTML='Log in →';
+      // Dù res.success hay chưa đủ 5 phút → đều chuyển sang Login page
+      // Không hiện lỗi trên payment page
+      window._pendingReg=null;
+      // Pre-fill phone vào login form cho tiện
+      document.getElementById('l-phone').value=reg.phone;
+      showForm('login');
+    })
+    .withFailureHandler(function(err){
+      btn.disabled=false;btn.innerHTML='Log in →';
+      // Chỉ hiện lỗi kết nối (không phải lỗi 5 phút)
+      if(errEl){errEl.textContent='Connection error. Please try again.';errEl.style.display='block';}
+    })
+    .registerUser({name:reg.name,phone:reg.phone,password:reg.password,referredBy:reg.referredBy,bank:reg.bank,bankAccount:reg.bankAccount,bankName:reg.bankName});
+}
+
+// LOGIN
+function doLogin(){
+  var phone=document.getElementById('l-phone').value.trim();
+  var pass=document.getElementById('l-pass').value.trim();
+  var errEl=document.getElementById('login-err');
+  if(!phone||!pass){errEl.textContent='Please enter your phone number and password.';errEl.classList.remove('hidden');return;}
+  var btn=document.querySelector('#login-form .btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Signing in...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      btn.disabled=false;btn.textContent='Log in';
+      if(res.success){
+        currentUser={name:res.name,phone:res.phone,referralCode:res.referralCode||''};
+        sessionStorage.setItem('sw_user',JSON.stringify(currentUser));
+        // Load bank info from sheet
+        _bankData={bank:res.bank||'',acc:res.bankAccount||'',name:res.bankName||''};
+        enterLMS();
+      }
+      else{errEl.textContent=res.msg;errEl.classList.remove('hidden');}
+    })
+    .withFailureHandler(function(err){btn.disabled=false;btn.textContent='Log in';errEl.textContent='Error: '+err.message;errEl.classList.remove('hidden');})
+    .checkLogin({phone:phone,pass:pass});
+}
+function doLogout(){
+  if(sessionCheckInterval)clearInterval(sessionCheckInterval);
+  sessionStorage.removeItem('sw_user');currentUser={name:'',phone:'',referralCode:''};
+  document.getElementById('lms-ui').style.display='none';
+  document.getElementById('auth-ui').style.display='flex';
+  document.getElementById('try-demo-btn').style.display='';
+  showForm('login');
+}
+
+// LMS ENTRY
+function enterLMS(){
+  document.getElementById('auth-ui').style.display='none';
+  document.getElementById('lms-ui').style.display='flex';
+  document.getElementById('sidebar-name').textContent=currentUser.name;
+  var refEl=document.getElementById('sidebar-ref-code');
+  if(refEl)refEl.textContent=currentUser.referralCode||'—';
+  document.getElementById('try-demo-btn').style.display='none';
+  startSessionCheck();navTo('v-dash');
+}
+function startSessionCheck(){
+  if(sessionCheckInterval)clearInterval(sessionCheckInterval);
+  sessionCheckInterval=setInterval(function(){
+    if(!currentUser.phone)return;
+    google.script.run.withSuccessHandler(function(res){if(!res||!res.valid){alert('Your session has ended. Please sign in again.');doLogout();}}).withFailureHandler(function(){}).checkSessionStatus(currentUser.phone);
+  },30000);
+}
+function navTo(viewId){
+  document.querySelectorAll('.view-section').forEach(function(v){v.classList.remove('active-view');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById(viewId).classList.add('active-view');
+  var map={'v-dash':'nav-dash','v-exam':'nav-exam','v-saved':'nav-saved','v-his':'nav-his'};
+  if(map[viewId])document.getElementById(map[viewId]).classList.add('active');
+  if(viewId==='v-dash')loadDashboard();
+  if(viewId==='v-his')loadHistory();
+  if(viewId==='v-saved')loadSavedTests();
+}
+
+// DASHBOARD
+function loadDashboard(){
+  if(currentUser.referralCode){
+    document.getElementById('my-ref-code').textContent=currentUser.referralCode;
+    document.getElementById('mm-registered-view').classList.remove('hidden');
+    document.getElementById('mm-guest-view').classList.add('hidden');
+  }
+  google.script.run.withSuccessHandler(function(data){
+    var total=data.history?data.history.length:0;
+    document.getElementById('stat-total').textContent=total;
+    if(total>0){
+      var c=data.counts||[],avg=Math.round(c.reduce(function(a,b){return a+b;},0)/total),best=Math.max.apply(null,c);
+      document.getElementById('stat-avg').textContent=avg;document.getElementById('stat-best').textContent=best;
+      document.getElementById('chart-empty').classList.add('hidden');drawChart(data.labels,c);
+    }else{document.getElementById('stat-avg').textContent='—';document.getElementById('stat-best').textContent='—';document.getElementById('chart-empty').classList.remove('hidden');}
+  }).withFailureHandler(function(){}).getStats(currentUser.phone);
+  if(currentUser.referralCode){
+    google.script.run.withSuccessHandler(function(res){if(res){document.getElementById('rs-total').textContent=fmtMoney(res.total);document.getElementById('rs-pending').textContent=fmtMoney(res.pending);document.getElementById('rs-paid').textContent=fmtMoney(res.paid);}}).withFailureHandler(function(){}).getReferralStats(currentUser.referralCode);
+  }
+}
+function drawChart(labels,counts){var ctx=document.getElementById('prog-chart').getContext('2d');if(progChart)progChart.destroy();progChart=new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{label:'Total Words',data:counts,borderColor:'#111',backgroundColor:'rgba(0,0,0,0.05)',borderWidth:2,pointBackgroundColor:'#111',pointRadius:5,tension:0.3,fill:true}]},options:{responsive:true,scales:{y:{min:0,ticks:{stepSize:50}}},plugins:{legend:{display:false}}}});}
+
+// HISTORY
+function loadHistory(){
+  google.script.run.withSuccessHandler(function(data){
+    var c=document.getElementById('history-content');
+    if(!data.history||data.history.length===0){historyData=[];c.innerHTML='<div class="empty-state"><div class="es-icon">📋</div><p>No submissions yet.</p></div>';return;}
+    historyData=data.history;
+    var rows='';
+    data.history.forEach(function(item,idx){
+      var t1c=item.wordCount1>=150?'wc-ok':'wc-low',t2c=item.wordCount2>=250?'wc-ok':'wc-low';
+      var starred=historyStars[idx]||false;
+      var subjDisplay=item.subjectTask1&&item.subjectTask2?item.subjectTask1+' | '+item.subjectTask2:item.subjectTask1||item.subjectTask2||'—';
+      rows+='<tr>'
+        +'<td><button class="star-btn'+(starred?' starred':'')+'\" onclick="toggleHistoryStar('+idx+',this)">⭐</button></td>'
+        +'<td style="white-space:nowrap">'+item.date+'</td>'
+        +'<td><span class="mode-badge">'+escHtml(item.mode||'')+'</span></td>'
+        +'<td><span class="subj-badge">'+escHtml(subjDisplay)+'</span></td>'
+        +'<td>'+escHtml(item.description||'—')+'</td>'
+        +'<td><span class="'+t1c+'">'+item.wordCount1+'</span></td>'
+        +'<td><span class="'+t2c+'">'+item.wordCount2+'</span></td>'
+        +'<td>'+(item.duration||'—')+' min</td>'
+        +'<td style="white-space:nowrap">'
+        +'<button onclick="viewDetail('+idx+',\'history\')" style="background:var(--black);color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;margin-right:4px;font-family:inherit;text-transform:uppercase">View</button>'
+        +'<button onclick="deleteEntry('+idx+')" style="background:#fff;color:var(--red);border:1.5px solid var(--red);padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;font-family:inherit;text-transform:uppercase">Delete</button>'
+        +'</td></tr>';
+    });
+    c.innerHTML='<table class="data-table"><thead><tr><th>★</th><th>Date</th><th>Mode</th><th>Subject</th><th>Description</th><th>Task 1</th><th>Task 2</th><th>Duration</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }).withFailureHandler(function(){document.getElementById('history-content').innerHTML='<div class="empty-state"><p>Error loading.</p></div>';}).getStats(currentUser.phone);
+}
+function toggleHistoryStar(idx,btn){historyStars[idx]=!historyStars[idx];btn.classList.toggle('starred',historyStars[idx]);}
+function viewDetail(idx,source){
+  var item=source==='history'?historyData[idx]:savedTestsData[idx];if(!item)return;
+  var t1c=(item.wordCount1||0)>=150?'color:#155724':'color:var(--red)';
+  var t2c=(item.wordCount2||0)>=250?'color:#155724':'color:var(--red)';
+  var subjDisplay=item.subjectTask1&&item.subjectTask2?item.subjectTask1+' | '+item.subjectTask2:item.subjectTask1||item.subjectTask2||'';
+  document.getElementById('detail-meta').innerHTML='<span>📅 '+item.date+'</span>'+'<span class="mode-badge">'+escHtml(item.mode||'')+'</span>'+(subjDisplay?'<span class="subj-badge">'+escHtml(subjDisplay)+'</span>':'')+(item.description?'<span>'+escHtml(item.description)+'</span>':'')+(source==='history'?'<span style="'+t1c+'">T1: '+item.wordCount1+'</span><span style="'+t2c+'">T2: '+item.wordCount2+'</span><span>⏱ '+(item.duration||'—')+'min</span>':'');
+  document.getElementById('detail-task1').textContent=item.task1||(source==='saved'?'(Saved test — not yet taken)':'(No answer)');
+  document.getElementById('detail-task2').textContent=item.task2||'';
+  var iw=document.getElementById('detail-img-wrap'),ie=document.getElementById('detail-img');
+  if(item.examImage&&item.examImage.length>10){ie.src=item.examImage;iw.style.display='block';}else{iw.style.display='none';}
+  showModal('modal-detail');
+}
+function deleteEntry(idx){
+  var item=historyData[idx];if(!item)return;
+  if(!confirm('Delete this submission from '+item.date+'?'))return;
+  google.script.run.withSuccessHandler(function(res){if(res&&res.success)loadHistory();else alert('Delete failed.');}).withFailureHandler(function(err){alert('Error: '+err.message);}).deleteSubmission({phone:currentUser.phone,rowIndex:item.rowIndex});
+}
+
+// SAVE TEST
+function loadSavedTests(){
+  google.script.run.withSuccessHandler(function(data){
+    var c=document.getElementById('saved-content');
+    if(!data.items||data.items.length===0){savedTestsData=[];c.innerHTML='<div class="empty-state"><div class="es-icon">📌</div><p>No saved tests yet.</p></div>';return;}
+    savedTestsData=data.items;
+    var rows='';
+    data.items.forEach(function(item,idx){
+      var starred=item.starred||false;
+      var subjDisplay=item.subjectTask1&&item.subjectTask2?item.subjectTask1+' | '+item.subjectTask2:item.subjectTask1||item.subjectTask2||'—';
+      var isDone=item.status==='Done';
+      var statusColor=isDone?'#155724':'var(--red)';
+      // Nút Thi: disabled nếu Done (chưa reset)
+      var thiBtn=isDone
+        ?'<button disabled style="background:#ccc;color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:not-allowed;margin-right:4px;font-family:inherit;text-transform:uppercase">Thi</button>'
+        :'<button onclick="startFromSaved('+idx+')" style="background:var(--black);color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;margin-right:4px;font-family:inherit;text-transform:uppercase">Thi</button>';
+      rows+='<tr>'
+        +'<td><button class="star-btn'+(starred?' starred':'')+'\" onclick="toggleSavedStar('+idx+',this)">⭐</button></td>'
+        +'<td>'+item.date+'</td>'
+        +'<td><span class="mode-badge">'+escHtml(item.mode||'')+'</span></td>'
+        +'<td><span class="subj-badge">'+escHtml(subjDisplay)+'</span></td>'
+        +'<td>'+escHtml(item.description||'—')+'</td>'
+        +'<td><span style="font-size:12px;font-weight:700;color:'+statusColor+'">'+escHtml(item.status||'Not done')+'</span></td>'
+        +'<td style="white-space:nowrap">'
+        +thiBtn
+        +'<button onclick="viewDetail('+idx+',\'saved\')" style="background:#fff;color:var(--black);border:1.5px solid var(--black);padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;margin-right:4px;font-family:inherit;text-transform:uppercase">View</button>'
+        +'<button onclick="deleteSaved('+idx+')" style="background:#fff;color:var(--red);border:1.5px solid var(--red);padding:4px 10px;font-size:11px;font-weight:700;border-radius:2px;cursor:pointer;margin-right:4px;font-family:inherit;text-transform:uppercase">Delete</button>'
+        +'<button onclick="resetSavedTest('+idx+')" title="Reset to Not done" style="background:#fff;color:#555;border:1.5px solid #ccc;padding:4px 8px;font-size:13px;border-radius:2px;cursor:pointer;font-family:inherit;">↺</button>'
+        +'</td></tr>';
+    });
+    c.innerHTML='<table class="data-table"><thead><tr><th>★</th><th>Date</th><th>Mode</th><th>Subject</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }).withFailureHandler(function(){}).getSavedTests(currentUser.phone);
+}
+function toggleSavedStar(idx,btn){
+  var item=savedTestsData[idx];if(!item)return;btn.classList.toggle('starred');
+  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).toggleSavedTestStar({phone:currentUser.phone,rowIndex:item.rowIndex});
+}
+function deleteSaved(idx){
+  var item=savedTestsData[idx];if(!item)return;
+  if(!confirm('Delete this saved test?'))return;
+  google.script.run.withSuccessHandler(function(res){if(res&&res.success)loadSavedTests();else alert('Delete failed.');}).withFailureHandler(function(){}).deleteSavedTest({phone:currentUser.phone,rowIndex:item.rowIndex});
+}
+function startFromSaved(idx){
+  var item=savedTestsData[idx];if(!item)return;
+  if(item.status==='Done'){alert('Bài này đã thi xong. Nhấn ↺ để reset trước khi thi lại.');return;}
+  examMode=item.mode||'Task 1 & 2';
+  examImageSrc=item.examImage||'';
+  isDemoMode=false;
+  window._savedTestRowIndex=item.rowIndex; // separate var, never cleared
+  window._pendingSavedRowIndex=item.rowIndex;
+  window._savedTestSubjectT1=item.subjectTask1||'';
+  window._savedTestSubjectT2=item.subjectTask2||'';
+  window._savedTestDesc=item.description||'';
+  window._fromSavedTest=true;
+  document.getElementById('c-name').value='';
+  document.getElementById('c-dob').value='';
+  document.getElementById('c-num').value='';
+  showModal('modal-confirm');
+}
+function resetSavedTest(idx){
+  var item=savedTestsData[idx];if(!item)return;
+  google.script.run
+    .withSuccessHandler(function(res){if(res&&res.success)loadSavedTests();})
+    .withFailureHandler(function(){})
+    .updateSavedTestStatus({rowIndex:item.rowIndex,status:'Not done'});
+}
+function openSaveTestModal(){
+  document.getElementById('st-mode').value='';
+  document.getElementById('st-subject-t1').innerHTML='<option value="">-- Subject Task 1 --</option>';
+  document.getElementById('st-subject-t2').innerHTML='<option value="">-- Subject Task 2 --</option>';
+  document.getElementById('st-desc').value='';document.getElementById('st-img').value='';
+  document.getElementById('st-img-ok').style.display='none';
+  document.getElementById('st-img-preview-wrap').style.display='none';
+  document.getElementById('st-img-remove-btn').classList.remove('show');
+  savedTestImageSrc='';showModal('modal-save-test');
+}
+function onSaveModeChange(){
+  var mode=document.getElementById('st-mode').value;
+  populateSubjects(document.getElementById('st-subject-t1'),'t1');
+  populateSubjects(document.getElementById('st-subject-t2'),'t2');
+  document.getElementById('st-subject-t1-wrap').style.display=mode==='Task 2 only'?'none':'block';
+  document.getElementById('st-subject-t2-wrap').style.display=mode==='Task 1 only'?'none':'block';
+}
+function onSaveTestImage(){
+  var f=document.getElementById('st-img').files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){
+    savedTestImageSrc=e.target.result;
+    document.getElementById('st-img-preview').src=savedTestImageSrc;
+    document.getElementById('st-img-preview-wrap').style.display='block';
+    document.getElementById('st-img-ok').style.display='block';
+    document.getElementById('st-img-remove-btn').classList.add('show');
+  };r.readAsDataURL(f);
+}
+// Image 3: removeSaveTestImage — X on thumbnail
+function removeSaveTestImage(e){
+  e.stopPropagation();savedTestImageSrc='';
+  document.getElementById('st-img').value='';
+  document.getElementById('st-img-ok').style.display='none';
+  document.getElementById('st-img-preview-wrap').style.display='none';
+  document.getElementById('st-img-preview').src='';
+  document.getElementById('st-img-remove-btn').classList.remove('show');
+}
+function doSaveTest(){
+  var mode=document.getElementById('st-mode').value;
+  if(!mode){alert('Please select a mode.');return;}
+  showLoading('Saving...','');
+  google.script.run.withSuccessHandler(function(res){hideLoading();if(res&&res.success){closeModal('modal-save-test');loadSavedTests();}else{alert('Save failed: '+(res?res.msg:''));}}).withFailureHandler(function(err){hideLoading();alert('Error: '+err.message);}).saveSavedTest({
+    name:currentUser.name,phone:currentUser.phone,mode:mode,
+    subjectTask1:document.getElementById('st-subject-t1').value,
+    subjectTask2:document.getElementById('st-subject-t2').value,
+    description:document.getElementById('st-desc').value.trim(),examImage:savedTestImageSrc
+  });
+}
+
+// EXAM FLOW
+function selectMode(mode){
+  examMode=mode;
+  ['mc-t1','mc-t2','mc-both'].forEach(function(id){document.getElementById(id).classList.remove('selected');});
+  var map={'Task 1 only':'mc-t1','Task 2 only':'mc-t2','Task 1 & 2':'mc-both'};
+  if(map[mode])document.getElementById(map[mode]).classList.add('selected');
+  document.getElementById('btn-start-exam').disabled=false;
+}
+function startExamFlow(){
+  document.getElementById('c-name').value='';document.getElementById('c-dob').value='';document.getElementById('c-num').value='';
+  showModal('modal-confirm');
+}
+function confirmDetails(){
+  if(!document.getElementById('c-name').value.trim()){alert('Please enter your full name.');return;}
+  // If coming from saved test → skip Instructions, go straight to exam
+  if(window._fromSavedTest){
+    window._fromSavedTest=false;
+    closeModal('modal-confirm');
+    // _pendingSavedRowIndex already set, go straight to exam
+    startExamScreenDirect();
+    return;
+  }
+  resetInstructScreen();
+  document.getElementById('instruct-mode-label').textContent=examMode==='Task 1 only'?'Time: 20 minutes':examMode==='Task 2 only'?'Time: 40 minutes':'Time: 1 hour';
+  populateSubjects(document.getElementById('exam-subject-t1'),'t1');
+  populateSubjects(document.getElementById('exam-subject-t2'),'t2');
+  document.getElementById('subject-t1-wrap').style.display=examMode==='Task 2 only'?'none':'block';
+  document.getElementById('subject-t2-wrap').style.display=examMode==='Task 1 only'?'none':'block';
+  if(window._savedTestSubjectT1){document.getElementById('exam-subject-t1').value=window._savedTestSubjectT1;}
+  if(window._savedTestSubjectT2){document.getElementById('exam-subject-t2').value=window._savedTestSubjectT2;}
+  if(window._savedTestDesc){document.getElementById('exam-desc').value=window._savedTestDesc;}
+  if(examImageSrc){setExamImage(examImageSrc);}
+  window._savedTestSubjectT1='';window._savedTestSubjectT2='';window._savedTestDesc='';
+  showModal('modal-instruct');
+}
+function resetInstructScreen(){
+  document.getElementById('exam-img').value='';
+  document.getElementById('img-ok').style.display='none';
+  document.getElementById('img-preview-wrap').style.display='none';
+  document.getElementById('img-preview-thumb').src='';
+  document.getElementById('instruct-err').style.display='none';
+  document.getElementById('btn-start').disabled=true;
+  document.getElementById('img-remove-btn').classList.remove('show');
+  document.getElementById('exam-desc').value='';examImageSrc='';
+}
+// Image 3: X button on thumbnail (not dropzone)
+function setExamImage(src){
+  examImageSrc=src;
+  document.getElementById('img-preview-thumb').src=src;
+  document.getElementById('img-preview-wrap').style.display='inline-block';
+  document.getElementById('img-ok').style.display='block';
+  document.getElementById('instruct-err').style.display='none';
+  document.getElementById('btn-start').disabled=false;
+  document.getElementById('img-remove-btn').classList.add('show');
+}
+function removeExamImage(e){
+  e.stopPropagation();examImageSrc='';
+  document.getElementById('exam-img').value='';
+  document.getElementById('img-ok').style.display='none';
+  document.getElementById('img-preview-wrap').style.display='none';
+  document.getElementById('img-preview-thumb').src='';
+  document.getElementById('btn-start').disabled=true;
+  document.getElementById('img-remove-btn').classList.remove('show');
+}
+function onImageSelected(){var f=document.getElementById('exam-img').files[0];if(!f)return;var r=new FileReader();r.onload=function(e){setExamImage(e.target.result);};r.readAsDataURL(f);}
+function examDragOver(e){e.preventDefault();document.getElementById('exam-upload-zone').classList.add('dragover');}
+function examDragLeave(){document.getElementById('exam-upload-zone').classList.remove('dragover');}
+function examDrop(e){e.preventDefault();document.getElementById('exam-upload-zone').classList.remove('dragover');var f=e.dataTransfer.files[0];if(f&&f.type.indexOf('image')!==-1){var r=new FileReader();r.onload=function(ev){setExamImage(ev.target.result);};r.readAsDataURL(f);}}
+function startExamFromUpload(){
+  if(!examImageSrc){document.getElementById('instruct-err').style.display='block';return;}
+  closeModal('modal-instruct');
+  // Only clear _pendingSavedRowIndex if NOT from saved test
+  if(!window._fromSavedTest) window._pendingSavedRowIndex=null;
+  startExamScreenDirect();
+}
+function startExamScreenDirect(){
+  document.getElementById('ta-task1').value='';document.getElementById('ta-task2').value='';
+  document.getElementById('wc-display').textContent='0';currentTask=1;examStartTime=new Date();
+  var t1=document.getElementById('tab1'),t2=document.getElementById('tab2');
+  document.getElementById('exam-mode-label').textContent=examMode;
+  if(examMode==='Task 1 only'){t2.style.display='none';t1.style.display='';}
+  else if(examMode==='Task 2 only'){t1.style.display='none';t2.style.display='';currentTask=2;}
+  else{t1.style.display='';t2.style.display='';}
+  var wg=document.getElementById('wc-guide');
+  if(examMode==='Task 1 only')wg.textContent='Min: 150 words';
+  else if(examMode==='Task 2 only')wg.textContent='Min: 250 words';
+  else wg.innerHTML='Task 1 min: <strong>150</strong> | Task 2 min: <strong>250</strong>';
+  var dur=examMode==='Task 1 only'?1200:examMode==='Task 2 only'?2400:3600;
+  document.getElementById('exam-ui').style.display='flex';
+  isDemoMode?document.getElementById('demo-banner').classList.remove('hidden'):document.getElementById('demo-banner').classList.add('hidden');
+  setTask(currentTask);startTimer(dur);
+}
+function setTask(num){
+  currentTask=num;
+  document.getElementById('tab1').classList.toggle('active',num===1);
+  document.getElementById('tab2').classList.toggle('active',num===2);
+  document.getElementById('current-task-label').textContent=num;
+  document.getElementById('ta-task1').classList.toggle('hidden',num!==1);
+  document.getElementById('ta-task2').classList.toggle('hidden',num!==2);
+  var img=document.getElementById('q-img');
+  if(examImageSrc){img.src=examImageSrc;img.style.display='block';document.getElementById('q-no-img').style.display='none';}
+  else{img.style.display='none';document.getElementById('q-no-img').style.display='block';}
+  updateWordCount();
+}
+function startTimer(totalSec){
+  var s=totalSec,el=document.getElementById('exam-timer');
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(function(){
+    s--;var m=Math.floor(s/60),sec=s%60;
+    el.textContent=(m<10?'0':'')+m+':'+(sec<10?'0':'')+sec;
+    if(s<=300)el.className='timer-red';else if(s<=600)el.className='timer-red';else el.className='';
+    if(s<=0){clearInterval(timerInterval);finishExam();}
+  },1000);
+}
+function updateWordCount(){var t=document.getElementById(currentTask===1?'ta-task1':'ta-task2').value.trim();document.getElementById('wc-display').textContent=t?t.split(/\s+/).length:0;}
+function finishExam(){
+  clearInterval(timerInterval);
+  var e1=document.getElementById('ta-task1').value.trim(),e2=document.getElementById('ta-task2').value.trim();
+  if(!e1&&!e2){alert('Your answers are empty. Please write something before submitting.');return;}
+  if(!confirm('Are you sure you want to submit your test?'))return;
+  document.getElementById('exam-ui').style.display='none';
+  // Update saved test status to Done
+  var savedRow=window._savedTestRowIndex||window._pendingSavedRowIndex;
+  if(savedRow){
+    google.script.run.withSuccessHandler(function(){
+      window._savedTestRowIndex=null;
+      window._pendingSavedRowIndex=null;
+      loadSavedTests();
+    }).withFailureHandler(function(){
+      window._savedTestRowIndex=null;
+      window._pendingSavedRowIndex=null;
+    }).updateSavedTestStatus({rowIndex:savedRow,status:'Done'});
+  }else{
+    window._pendingSavedRowIndex=null;
+  }
+  if(isDemoMode)showDemoResult(e1,e2);else showResultScreen(e1,e2);
+}
+function showDemoResult(e1,e2){
+  var wc1=countWords(e1),wc2=countWords(e2);
+  document.getElementById('r-wc1').textContent=wc1;document.getElementById('r-wc2').textContent=wc2;
+  document.getElementById('r-wc-total').textContent=wc1+wc2;document.getElementById('r-duration').textContent='—';
+  document.getElementById('save-status').innerHTML='<span style="color:var(--red)">⚠ Demo mode — results not saved. <a href="#" onclick="exitDemo()" style="color:var(--black);font-weight:700">Register now →</a></span>';
+  document.getElementById('result-ui').style.display='flex';
+}
+function showResultScreen(e1,e2){
+  var wc1=countWords(e1),wc2=countWords(e2),total=wc1+wc2;
+  var dur=examStartTime?Math.round((new Date()-examStartTime)/60000):0;
+  var el1=document.getElementById('r-wc1'),el2=document.getElementById('r-wc2');
+  el1.textContent=wc1;el2.textContent=wc2;
+  el1.className='wc-val '+(wc1>=150?'wc-ok':'wc-low');el2.className='wc-val '+(wc2>=250?'wc-ok':'wc-low');
+  document.getElementById('r-wc-total').textContent=total;document.getElementById('r-duration').textContent=dur;
+  document.getElementById('save-status').textContent='Saving...';document.getElementById('save-status').className='save-status';
+  document.getElementById('result-ui').style.display='flex';
+  google.script.run
+    .withSuccessHandler(function(res){var el=document.getElementById('save-status');if(res&&res.success){el.textContent='✓ Saved successfully.';el.className='save-status save-ok';}else{el.textContent='⚠ Save failed.';el.className='save-status save-err';}})
+    .withFailureHandler(function(err){var el=document.getElementById('save-status');el.textContent='⚠ '+err.message;el.className='save-status save-err';})
+    .saveSubmission({
+      phone:currentUser.phone,name:currentUser.name,mode:examMode,
+      subjectTask1:(document.getElementById('exam-subject-t1')||{}).value||'',
+      subjectTask2:(document.getElementById('exam-subject-t2')||{}).value||'',
+      description:(document.getElementById('exam-desc')||{}).value||'',
+      task1:e1,task2:e2,wordCount1:wc1,wordCount2:wc2,duration:dur,examImage:examImageSrc
+    });
+}
+function goToHistory(){document.getElementById('result-ui').style.display='none';navTo('v-his');}
+function doNewExam(){document.getElementById('result-ui').style.display='none';examImageSrc='';isDemoMode=false;}
+
+// DEMO — 5 min full LMS then auto-kick
+function openDemoMode(){
+  isDemoMode=true;examMode='Task 1 & 2';examImageSrc='';
+  currentUser={name:'Demo',phone:'',referralCode:''};
+  document.getElementById('auth-ui').style.display='none';
+  document.getElementById('lms-ui').style.display='flex';
+  document.getElementById('sidebar-name').textContent='Demo';
+  document.getElementById('try-demo-btn').style.display='none';
+  navTo('v-dash');
+  if(demoTimer)clearTimeout(demoTimer);
+  demoTimer=setTimeout(function(){clearInterval(timerInterval);exitDemo();},300000);
+}
+function exitDemo(){
+  if(demoTimer)clearTimeout(demoTimer);clearInterval(timerInterval);isDemoMode=false;
+  currentUser={name:'',phone:'',referralCode:''};
+  document.getElementById('exam-ui').style.display='none';
+  document.getElementById('result-ui').style.display='none';
+  document.getElementById('lms-ui').style.display='none';
+  document.getElementById('auth-ui').style.display='flex';
+  document.getElementById('try-demo-btn').style.display='';showForm('reg');
+}
+
+// SF FLOAT
+var sfOpen=false;
+function toggleSF(){sfOpen=!sfOpen;var m=document.getElementById('sf-menu'),b=document.getElementById('sf-toggle');if(sfOpen){m.classList.add('show');b.classList.add('open');}else{m.classList.remove('show');b.classList.remove('open');}}
+function closeSF(){sfOpen=false;document.getElementById('sf-menu').classList.remove('show');document.getElementById('sf-toggle').classList.remove('open');}
+function openSFOverlay(id){closeSF();document.getElementById(id).classList.add('show');if(id==='sf-review')loadFeedback();if(id==='sf-faq')loadFAQ();}
+function closeSFOverlay(e,id){if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('show');}
+function closeSFOverlayById(id){document.getElementById(id).classList.remove('show');}
+
+// FAQ
+function loadFAQ(){
+  var el=document.getElementById('faq-body');el.innerHTML='<p style="font-size:13px;color:var(--muted)">Loading...</p>';
+  google.script.run.withSuccessHandler(function(data){
+    if(!data.items||data.items.length===0){el.innerHTML='<p style="font-size:13px;color:var(--muted)">No FAQ items yet.</p>';return;}
+    var html='';data.items.forEach(function(item,i){html+='<div class="faq-item" id="faq-'+i+'"><div class="faq-q" onclick="toggleFAQ('+i+')">'+escHtml(item.q)+'</div><div class="faq-a">'+escHtml(item.a)+'</div></div>';});
+    el.innerHTML=html;
+  }).withFailureHandler(function(){el.innerHTML='<p style="font-size:13px;color:var(--muted)">Could not load FAQ.</p>';}).getFAQ();
+}
+function toggleFAQ(i){document.getElementById('faq-'+i).classList.toggle('open');}
+
+// FEEDBACK
+function fbCharCount(){var v=document.getElementById('fb-msg').value;var len=v.length;var el=document.getElementById('fb-char');el.textContent=len+' / 600';el.className='fb-char'+(len>600?' over':'');}
+function loadFeedback(){
+  google.script.run.withSuccessHandler(function(data){
+    var el=document.getElementById('fb-list');
+    if(!data.items||data.items.length===0){el.innerHTML='<div class="fb-empty">No reviews yet. Be the first!</div>';return;}
+    var html='';
+    data.items.forEach(function(item){html+='<div class="fb-item" data-row="'+item.rowIndex+'" onclick="fbItemClick(this)"><span class="fb-name">'+escHtml(item.name)+'</span><span class="fb-date">'+item.date+'</span><div class="fb-msg">'+escHtml(item.message)+'</div><button class="fb-del-btn" onclick="fbDelete(event,this)">Delete</button></div>';});
+    el.innerHTML=html;
+  }).withFailureHandler(function(){}).getFeedback();
+}
+function fbItemClick(el){fbClickCount++;if(fbClickTimer)clearTimeout(fbClickTimer);fbClickTimer=setTimeout(function(){fbClickCount=0;},600);if(fbClickCount>=3){fbClickCount=0;el.classList.toggle('show-del');}}
+function fbDelete(e,btn){e.stopPropagation();var pw=prompt('Enter password to delete:');if(pw===null)return;if(pw!=='93451'){alert('Incorrect password.');return;}var row=parseInt(btn.parentElement.getAttribute('data-row'));google.script.run.withSuccessHandler(function(res){if(res&&res.success)loadFeedback();}).withFailureHandler(function(){}).deleteFeedback({rowIndex:row});}
+function submitFeedback(){
+  var name=document.getElementById('fb-name').value.trim();
+  var msg=document.getElementById('fb-msg').value.trim();
+  var errEl=document.getElementById('err-fb-msg');
+  if(!msg){errEl.textContent='Please enter a message.';errEl.classList.add('show');return;}
+  if(msg.length>600){errEl.textContent='Max 600 characters.';errEl.classList.add('show');return;}
+  errEl.classList.remove('show');
+  google.script.run.withSuccessHandler(function(res){if(res&&res.success){document.getElementById('fb-name').value='';document.getElementById('fb-msg').value='';document.getElementById('fb-char').textContent='0 / 600';loadFeedback();}}).withFailureHandler(function(){}).saveFeedback({name:name||'Anonymous',phone:currentUser.phone||'',message:msg});
+}
+
+// ── MAKE MONEY ─────────────────────────────────────────────────────────────
+// Image 2 - 4.4: setMMLang applies 100% of all strings including placeholders, btn text, tab names
+function setMMLang(lang){
+  mmLang=lang;
+  var t=MM[lang];
+  document.getElementById('mm-lang-en').classList.toggle('active',lang==='en');
+  document.getElementById('mm-lang-vi').classList.toggle('active',lang==='vi');
+  // Tabs
+  document.getElementById('mm-tab-ctv').textContent=t.tab_ctv;
+  document.getElementById('mm-tab-feedback').textContent=t.tab_fb;
+  document.getElementById('mm-tab-guide').textContent=t.tab_guide;
+  // CTV section
+  document.getElementById('mm-ctv-title').textContent=t.ctv_title;
+  document.getElementById('mm-ctv-desc').innerHTML=t.ctv_desc;
+  document.getElementById('mm-rc-label').textContent=t.rc_label;
+  document.getElementById('mm-rc-label2').textContent=t.rc_label2;
+  document.getElementById('mm-stat-total-lbl').textContent=t.stat_total;
+  document.getElementById('mm-stat-pending-lbl').textContent=t.stat_pending;
+  document.getElementById('mm-stat-paid-lbl').textContent=t.stat_paid;
+  document.getElementById('mm-ctv-note').innerHTML=t.ctv_note;
+  document.getElementById('mm-create-label').textContent=t.create_label;
+  // Placeholders
+  document.getElementById('ctv-name').placeholder=t.name_ph;
+  document.getElementById('ctv-phone').placeholder=t.phone_ph;
+  document.getElementById('ctv-bank').placeholder=t.bank_ph;
+  document.getElementById('ctv-bank-account').placeholder=t.bank_acc_ph;
+  document.getElementById('ctv-bank-name').placeholder=t.bank_name_ph;
+  // Error texts
+  document.getElementById('err-ctv-name').textContent=t.err_name;
+  document.getElementById('err-ctv-phone').textContent=t.err_phone;
+  // Button
+  document.getElementById('mm-btn-create-text').textContent=t.btn_create;
+  // Success
+  document.getElementById('ctv-success-msg').textContent=t.success_msg;
+  // Check section
+  document.getElementById('mm-check-label').textContent=t.check_label;
+  document.getElementById('check-ref-input').placeholder=t.check_ph;
+  document.getElementById('mm-btn-check-text').textContent=t.btn_check;
+  document.getElementById('check-ref-invalid').textContent=t.invalid_code;
+  document.getElementById('mm-cr-total-lbl').textContent=t.cr_total;
+  document.getElementById('mm-cr-pending-lbl').textContent=t.cr_pending;
+  document.getElementById('mm-cr-paid-lbl').textContent=t.cr_paid;
+  // Feedback
+  document.getElementById('mm-fb-title').textContent=t.fb_title;
+  document.getElementById('mm-fb-desc').innerHTML=t.fb_desc;
+  // Guide
+  document.getElementById('mm-guide-title').textContent=t.guide_title;
+  document.getElementById('mm-guide-coming').textContent=t.guide_coming;
+}
+
+function openMM(){
+  if(currentUser.phone){
+    document.getElementById('mm-registered-view').classList.remove('hidden');
+    document.getElementById('mm-guest-view').classList.add('hidden');
+    if(currentUser.referralCode){
+      document.getElementById('my-ref-code').textContent=currentUser.referralCode;
+      google.script.run.withSuccessHandler(function(res){if(res&&res.valid){document.getElementById('rs-total').textContent=fmtMoney(res.total);document.getElementById('rs-pending').textContent=fmtMoney(res.pending);document.getElementById('rs-paid').textContent=fmtMoney(res.paid);}}).withFailureHandler(function(){}).getReferralStats(currentUser.referralCode);
+    }
+  }else{
+    document.getElementById('mm-registered-view').classList.add('hidden');
+    document.getElementById('mm-guest-view').classList.remove('hidden');
+  }
+  document.getElementById('mm-overlay').classList.add('show');
+  switchMMTab('ctv');setMMLang('en');
+}
+function toggleFindCTV(){
+  var form=document.getElementById('find-ctv-form');
+  form.style.display=form.style.display==='none'?'block':'none';
+  if(form.style.display==='none'){
+    document.getElementById('find-ctv-name').value='';
+    document.getElementById('find-ctv-phone').value='';
+    document.getElementById('find-ctv-result').style.display='none';
+  }
+}
+function closeMM(){
+  document.getElementById('mm-overlay').classList.remove('show');
+  resetCheckRefStats();
+  document.getElementById('check-ref-input').value='';
+  // Reset find CTV form
+  var form=document.getElementById('find-ctv-form');
+  if(form){form.style.display='none';}
+  var fcn=document.getElementById('find-ctv-name');if(fcn)fcn.value='';
+  var fcp=document.getElementById('find-ctv-phone');if(fcp)fcp.value='';
+  var fcr=document.getElementById('find-ctv-result');if(fcr)fcr.style.display='none';
+}
+function resetCheckRefStats(){
+  document.getElementById('check-ref-result').style.display='none';
+  document.getElementById('check-ref-invalid').style.display='none';
+  document.getElementById('check-ref-valid-stats').style.display='none';
+  document.getElementById('cr-total').textContent='0đ';
+  document.getElementById('cr-pending').textContent='0đ';
+  document.getElementById('cr-paid').textContent='0đ';
+}
+function onCheckRefInput(){
+  var v=document.getElementById('check-ref-input').value.trim();
+  if(!v)resetCheckRefStats();
+}
+function closeMM(){
+  document.getElementById('mm-overlay').classList.remove('show');
+  // Reset check ref stats khi đóng modal
+  resetCheckRefStats();
+  document.getElementById('check-ref-input').value='';
+}
+function switchMMTab(tab){
+  document.querySelectorAll('.mm-tab').forEach(function(t,i){var tabs=['ctv','feedback','guide'];t.classList.toggle('active',tabs[i]===tab);});
+  document.querySelectorAll('.mm-section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('mm-'+tab).classList.add('active');
+}
+
+// Image 2 - 4.2: Real-time CTV name & phone validation with * đỏ; disable btn if invalid
+function validateCTVName(){
+  var v=document.getElementById('ctv-name').value.trim();
+  // Vietnamese full name: at least 2 words, only letters/spaces (no digits)
+  ctvNameOk=v.length>=2&&/\s/.test(v)&&!/[0-9]/.test(v);
+  var errEl=document.getElementById('err-ctv-name');
+  if(v.length>0){
+    errEl.classList.toggle('show',!ctvNameOk);
+  }else{errEl.classList.remove('show');}
+  checkCTVFormReady();
+}
+function validateCTVPhone(){
+  var v=document.getElementById('ctv-phone').value.trim();
+  ctvPhoneOk=/^(0[3-9][0-9]{8})$/.test(v);
+  var errEl=document.getElementById('err-ctv-phone');
+  if(v.length>3){errEl.classList.toggle('show',!ctvPhoneOk);}else{errEl.classList.remove('show');}
+  checkCTVFormReady();
+}
+function checkCTVFormReady(){
+  var bankFields=document.getElementById('ctv-bank-fields');
+  var btn=document.getElementById('btn-create-ctv');
+  if(ctvNameOk&&ctvPhoneOk){bankFields.style.display='block';btn.disabled=false;}
+  else{bankFields.style.display='none';btn.disabled=true;}
+}
+
+function createCollaboratorCode(){
+  var name=document.getElementById('ctv-name').value.trim();
+  var phone=document.getElementById('ctv-phone').value.trim();
+  var bank=document.getElementById('ctv-bank').value.trim();
+  var bankAcc=document.getElementById('ctv-bank-account').value.trim();
+  var bankName=document.getElementById('ctv-bank-name').value.trim();
+  var errEl=document.getElementById('err-ctv');
+  if(!ctvNameOk||!ctvPhoneOk){errEl.textContent=MM[mmLang].err_name;errEl.classList.add('show');return;}
+  errEl.classList.remove('show');
+  var btn=document.getElementById('btn-create-ctv');
+  btn.disabled=true;document.getElementById('mm-btn-create-text').textContent=MM[mmLang].btn_creating;
+  // Image 2 - 4.1: scale 0.95 animation on click
+  btn.style.transform='scale(0.95)';btn.style.filter='brightness(0.85)';
+  setTimeout(function(){btn.style.transform='';btn.style.filter='';},150);
+  google.script.run.withSuccessHandler(function(res){
+    btn.disabled=false;document.getElementById('mm-btn-create-text').textContent=MM[mmLang].btn_create;
+    if(res.success){
+      document.getElementById('ctv-success-msg').textContent=MM[mmLang].success_msg;
+      document.getElementById('ctv-code-display').textContent=res.code;
+      document.getElementById('ctv-result').style.display='block';
+    }else{
+      errEl.textContent=res.msg||'Referral code already exists. Please use a different name or phone.';errEl.classList.add('show');
+    }
+  }).withFailureHandler(function(err){
+    btn.disabled=false;document.getElementById('mm-btn-create-text').textContent=MM[mmLang].btn_create;
+    errEl.textContent='Error: '+err.message;errEl.classList.add('show');
+  }).registerCollaborator({name:name,phone:phone,bank:bank,bankAccount:bankAcc,bankName:bankName});
+}
+
+function checkReferralStats(){
+  var btn=document.getElementById('mm-btn-check');
+  var btnText=document.getElementById('mm-btn-check-text');
+  var code=document.getElementById('check-ref-input').value.trim();
+  if(!code){alert(mmLang==='vi'?'Vui lòng nhập mã giới thiệu.':'Please enter a referral code.');return;}
+  // Show spinner
+  btn.disabled=true;
+  btnText.innerHTML='<span class="spinner"></span>';
+  google.script.run.withSuccessHandler(function(res){
+    btn.disabled=false;
+    btnText.textContent=document.getElementById('mm-btn-check').getAttribute('data-label')||'Check';
+    // restore translated label
+    var t=MM[mmLang];if(t)btnText.textContent=t.btn_check;
+    document.getElementById('check-ref-result').style.display='block';
+    if(!res||!res.valid){
+      document.getElementById('check-ref-invalid').style.display='block';
+      document.getElementById('check-ref-valid-stats').style.display='none';
+    }else{
+      document.getElementById('check-ref-invalid').style.display='none';
+      document.getElementById('check-ref-valid-stats').style.display='block';
+      document.getElementById('cr-total').textContent=fmtMoney(res.total);
+      document.getElementById('cr-pending').textContent=fmtMoney(res.pending);
+      document.getElementById('cr-paid').textContent=fmtMoney(res.paid);
+    }
+  }).withFailureHandler(function(){
+    btn.disabled=false;
+    var t=MM[mmLang];if(t)btnText.textContent=t.btn_check;else btnText.textContent='Check';
+    document.getElementById('check-ref-result').style.display='block';
+    document.getElementById('check-ref-invalid').style.display='block';
+    document.getElementById('check-ref-valid-stats').style.display='none';
+  }).getReferralStats(code);
+}
+
+// ── GLOBAL EN/VI LANGUAGE ────────────────────────────────────
+var globalLang='en';
+var LANG={
+  en:{
+    // Auth left
+    headline:'Practice IELTS Writing Like the Real Exam',
+    feat1:'Interface simulates British Council ~90-95%',
+    feat2:'Last 5-10 minutes creates real exam pressure',
+    feat3:'Upload any exam paper and practice as if it\'s real',
+    feat4:'Dashboard to track your writing progress',
+    feat5:'Submission history — review your past attempts easily',
+    feat6:'Lifetime access — one payment, use forever',
+    makeMoneyBtn:'💰 Make Money',
+    // Register form
+    regTitle:'Create Account',
+    fullName:'Full name (e.g. Nguyen Van A)',
+    phoneNumber:'Phone number (e.g. 0901234567)',
+    password:'Password (e.g. Tracy123)',
+    referralCode:'Referral code (optional)',
+    registerPay:'Register & Pay',
+    alreadyHave:'Already have an account?',
+    loginLink:'Log in',
+    // Login form
+    loginTitle:'Log in',
+    loginPhone:'Phone number (e.g. 0901234567)',
+    loginPass:'Password (e.g. Tracy123)',
+    loginBtn:'Log in',
+    noAccount:'Don\'t have an account?',
+    registerLink:'Register',
+    forgotLink:'Forgot password?',
+    // Forgot form
+    forgotTitle:'Forgot Password',
+    forgotDesc:'Enter your full name and registered phone number to retrieve your password.',
+    forgotNamePh:'Full name',
+    forgotPhonePh:'Phone number',
+    forgotBtn:'View Password',
+    forgotPassLabel:'Your password:',
+    backToLogin:'← Back to login',
+    // Payment
+    completePayment:'Complete Payment',
+    transferActivate:'Transfer to activate your account',
+    lifetimeAccess:'(Lifetime access)',
+    payLoginBtn:'Log in →',
+    // LMS nav
+    dashboard:'Dashboard',
+    takeTest:'Take Test',
+    saveTest:'Save Test',
+    history:'History',
+    signOut:'Sign Out',
+    // Save Test
+    saveNewBtn:'+ Save New Test',
+    statusDone:'Done',
+    statusNotDone:'Not done',
+    // Dashboard stats
+    statTests:'Tests Taken',
+    statAvg:'Avg. Words',
+    statBest:'Best Count',
+    // Try Demo / Support
+    tryDemo:'Try Demo',
+    supportFb:'Support & Feedback',
+    // Support menu
+    sfFaq:'FAQ',
+    sfReview:'Review for Swiftstreet',
+    sfZalo:'Contact Zalo for support',
+    // LMS content
+    wordCountProgress:'Word Count Progress',
+    firstTestMsg:'Complete your first test to start tracking.',
+    saveTestTitle:'Save Test',
+    historyTitle:'Submission History',
+    takeTestTitle:'Take a Test',
+    dashTitle:'Dashboard',
+    // Table headers
+    thStar:'★',thDate:'Date',thMode:'Mode',thSubject:'Subject',thDesc:'Description',thStatus:'Status',thActions:'Actions',
+    // Make Money
+    mmCollab:'Collaborator',mmFeedback:'Feedback',mmGuide:'Instructional video'
+  },
+  vi:{
+    headline:'Luyện thi IELTS Writing như thi thật',
+    feat1:'Giao diện mô phỏng British Council ~90-95%',
+    feat2:'5-10 phút cuối tạo áp lực như thi thật',
+    feat3:'Upload đề thi bất kỳ và luyện như thi thật',
+    feat4:'Dashboard theo dõi tiến độ luyện viết',
+    feat5:'Lịch sử bài nộp — dễ dàng xem lại',
+    feat6:'Truy cập trọn đời — một lần thanh toán, dùng mãi',
+    makeMoneyBtn:'💰 Kiếm tiền',
+    // Register form
+    regTitle:'Tạo tài khoản',
+    fullName:'Họ và tên (vd: Nguyễn Văn A)',
+    phoneNumber:'Số điện thoại (vd: 0901234567)',
+    password:'Mật khẩu (vd: Tracy123)',
+    referralCode:'Mã giới thiệu (không bắt buộc)',
+    registerPay:'Đăng ký & Thanh toán',
+    alreadyHave:'Đã có tài khoản?',
+    loginLink:'Đăng nhập',
+    // Login form
+    loginTitle:'Đăng nhập',
+    loginPhone:'Số điện thoại (vd: 0901234567)',
+    loginPass:'Mật khẩu (vd: Tracy123)',
+    loginBtn:'Đăng nhập',
+    noAccount:'Chưa có tài khoản?',
+    registerLink:'Đăng ký',
+    forgotLink:'Quên mật khẩu?',
+    // Forgot form
+    forgotTitle:'Quên mật khẩu',
+    forgotDesc:'Nhập họ tên và số điện thoại đã đăng ký để xem lại mật khẩu.',
+    forgotNamePh:'Họ tên đầy đủ',
+    forgotPhonePh:'Số điện thoại',
+    forgotBtn:'Xem mật khẩu',
+    forgotPassLabel:'Mật khẩu của bạn:',
+    backToLogin:'← Quay lại đăng nhập',
+    // Payment
+    completePayment:'Hoàn tất thanh toán',
+    transferActivate:'Chuyển khoản để kích hoạt tài khoản',
+    lifetimeAccess:'(Truy cập trọn đời)',
+    payLoginBtn:'Đăng nhập →',
+    // LMS nav
+    dashboard:'Tổng quan',
+    takeTest:'Làm bài thi',
+    saveTest:'Lưu đề thi',
+    history:'Lịch sử',
+    signOut:'Đăng xuất',
+    // Save Test
+    saveNewBtn:'+ Lưu đề thi mới',
+    statusDone:'Đã làm',
+    statusNotDone:'Chưa làm',
+    // Dashboard stats
+    statTests:'Số bài thi',
+    statAvg:'Trung bình từ',
+    statBest:'Cao nhất',
+    // Try Demo / Support
+    tryDemo:'Dùng thử',
+    supportFb:'Hỗ trợ & Phản hồi',
+    // Support menu
+    sfFaq:'FAQ',
+    sfReview:'Đánh giá Swiftstreet',
+    sfZalo:'Liên hệ Zalo để hỗ trợ',
+    // LMS content
+    wordCountProgress:'Tiến độ số từ',
+    firstTestMsg:'Hoàn thành bài thi đầu tiên để bắt đầu theo dõi.',
+    saveTestTitle:'Lưu đề thi',
+    historyTitle:'Lịch sử bài nộp',
+    takeTestTitle:'Làm bài thi',
+    dashTitle:'Tổng quan',
+    // Table headers
+    thStar:'★',thDate:'Ngày',thMode:'Chế độ',thSubject:'Chủ đề',thDesc:'Mô tả',thStatus:'Trạng thái',thActions:'Thao tác',
+    // Make Money
+    mmCollab:'Cộng tác viên',mmFeedback:'Feedback',mmGuide:'Video hướng dẫn'
+  }
+};
+
+function setGlobalLang(lang){
+  globalLang=lang;
+  var t=LANG[lang];
+
+  // ── Toggle button style ──
+  var allEnBtns=['global-lang-en','lms-lang-en'];
+  var allViBtns=['global-lang-vi','lms-lang-vi'];
+  allEnBtns.forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.style.background=lang==='en'?'#333':'transparent';
+    el.style.color=lang==='en'?'#fff':(id==='lms-lang-en'?'#666':'#999');
+  });
+  allViBtns.forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.style.background=lang==='vi'?'#333':'transparent';
+    el.style.color=lang==='vi'?'#fff':(id==='lms-lang-vi'?'#666':'#999');
+  });
+
+  // ── Auth left ──
+  var ah=document.getElementById('auth-headline');if(ah)ah.textContent=t.headline;
+  for(var i=1;i<=6;i++){var f=document.getElementById('feat-'+i);if(f)f.textContent=t['feat'+i];}
+  var mmBtn=document.querySelector('.make-money-btn');if(mmBtn)mmBtn.textContent=t.makeMoneyBtn;
+  var tryDemoBtn=document.getElementById('try-demo-btn');if(tryDemoBtn)tryDemoBtn.textContent=t.tryDemo;
+  var sfBtn=document.getElementById('sf-toggle');
+  if(sfBtn){var sfSpans=sfBtn.childNodes;sfSpans.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=' '+t.supportFb;});}
+
+  // ── Register form ──
+  var regH=document.querySelector('#reg-form h3');if(regH)regH.textContent=t.regTitle;
+  var rn=document.getElementById('r-name');if(rn)rn.placeholder=t.fullName;
+  var rp=document.getElementById('r-phone');if(rp)rp.placeholder=t.phoneNumber;
+  var rpw=document.getElementById('r-pass');if(rpw)rpw.placeholder=t.password;
+  var rr=document.getElementById('r-ref');if(rr)rr.placeholder=t.referralCode;
+  var br=document.getElementById('btn-reg');if(br&&!br.querySelector('.spinner'))br.textContent=t.registerPay;
+  var rha=document.getElementById('reg-have-account');
+  if(rha)rha.innerHTML=t.alreadyHave+' <a onclick="showForm(\'login\')" id="reg-login-link">'+t.loginLink+'</a>';
+
+  // ── Login form ──
+  var lT=document.getElementById('login-title');if(lT)lT.textContent=t.loginTitle;
+  var lp=document.getElementById('l-phone');if(lp)lp.placeholder=t.loginPhone;
+  var lpw=document.getElementById('l-pass');if(lpw)lpw.placeholder=t.loginPass;
+  var lb=document.getElementById('btn-login');if(lb&&!lb.querySelector('.spinner'))lb.textContent=t.loginBtn;
+  var lna=document.getElementById('login-no-account');
+  if(lna)lna.innerHTML=t.noAccount+' <a onclick="showForm(\'reg\')" id="login-register-link">'+t.registerLink+'</a>';
+  var fl=document.getElementById('forgot-link');if(fl)fl.textContent=t.forgotLink;
+
+  // ── Forgot form ──
+  var fgT=document.getElementById('forgot-title');if(fgT)fgT.textContent=t.forgotTitle;
+  var fgD=document.getElementById('forgot-desc');if(fgD)fgD.textContent=t.forgotDesc;
+  var fgN=document.getElementById('fg-name');if(fgN)fgN.placeholder=t.forgotNamePh;
+  var fgP=document.getElementById('fg-phone');if(fgP)fgP.placeholder=t.forgotPhonePh;
+  var fgB=document.getElementById('btn-forgot');if(fgB&&!fgB.querySelector('.spinner'))fgB.textContent=t.forgotBtn;
+  var fgPL=document.getElementById('forgot-pass-label');if(fgPL)fgPL.textContent=t.forgotPassLabel;
+  var btl=document.getElementById('back-to-login');if(btl)btl.textContent=t.backToLogin;
+
+  // ── Payment ──
+  var cpH=document.querySelector('#pay-form h3');if(cpH)cpH.textContent=t.completePayment;
+  var cpS=document.querySelector('#pay-form .pay-sub');if(cpS)cpS.textContent=t.transferActivate;
+  var lt=document.querySelector('#pay-form .pay-lifetime');if(lt)lt.textContent=t.lifetimeAccess;
+  var plb=document.getElementById('btn-pay-login');if(plb&&!plb.querySelector('.spinner'))plb.textContent=t.payLoginBtn;
+
+  // ── LMS nav ──
+  var navEl=document.getElementById('nav-dash');
+  if(navEl){navEl.childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.dashboard;});}
+  navEl=document.getElementById('nav-exam');
+  if(navEl){navEl.childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.takeTest;});}
+  navEl=document.getElementById('nav-saved');
+  if(navEl){navEl.childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.saveTest;});}
+  navEl=document.getElementById('nav-his');
+  if(navEl){navEl.childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.history;});}
+  var soBtn=document.querySelector('.sidebar-footer .btn-white');if(soBtn)soBtn.textContent=t.signOut;
+
+  // ── Dashboard stat labels ──
+  var sl=document.querySelectorAll('.stat-card .s-label');
+  if(sl[0])sl[0].textContent=t.statTests;
+  if(sl[1])sl[1].textContent=t.statAvg;
+  if(sl[2])sl[2].textContent=t.statBest;
+
+  // ── Save Test button ──
+  var snb=document.querySelector('#v-saved .btn-black');if(snb)snb.textContent=t.saveNewBtn;
+
+  // ── Page titles ──
+  var pDash=document.querySelector('#v-dash .page-title');if(pDash)pDash.textContent=t.dashTitle;
+  var pExam=document.querySelector('#v-exam .page-title');if(pExam)pExam.textContent=t.takeTestTitle;
+  var pSaved=document.querySelector('#v-saved .page-title');if(pSaved)pSaved.textContent=t.saveTestTitle;
+  var pHis=document.querySelector('#v-his .page-title');if(pHis)pHis.textContent=t.historyTitle;
+
+  // ── Chart title ──
+  var chartH=document.querySelector('.chart-box h4');if(chartH)chartH.textContent=t.wordCountProgress;
+  var chartEmpty=document.querySelector('#chart-empty p');if(chartEmpty)chartEmpty.textContent=t.firstTestMsg;
+
+  // ── Support menu ──
+  var sfItems=document.querySelectorAll('.sf-item');
+  if(sfItems[0])sfItems[0].childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.sfFaq;});
+  if(sfItems[1])sfItems[1].childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.sfReview;});
+  if(sfItems[2])sfItems[2].childNodes.forEach(function(n){if(n.nodeType===3&&n.textContent.trim())n.textContent=t.sfZalo;});
+
+  // ── Make Money tabs ──
+  var mmTabCtv=document.getElementById('mm-tab-ctv');if(mmTabCtv)mmTabCtv.textContent=t.mmCollab;
+  var mmTabFb=document.getElementById('mm-tab-feedback');if(mmTabFb)mmTabFb.textContent=t.mmFeedback;
+  var mmTabG=document.getElementById('mm-tab-guide');if(mmTabG)mmTabG.textContent=t.mmGuide;
+
+  // ── Reload save test if visible ──
+  var vs=document.getElementById('v-saved');
+  if(vs&&vs.classList.contains('active-view'))loadSavedTests();
+}
+
+var _bankData={bank:'',acc:'',name:''};
+function toggleBankPopup(){
+  var popup=document.getElementById('bank-popup');
+  var isOpen=popup.style.display==='block';
+  popup.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    if(_bankData.bank){
+      document.getElementById('bank-display').style.display='block';
+      document.getElementById('bank-form-popup').style.display='none';
+      document.getElementById('bank-info-text').innerHTML='<b>'+escHtml(_bankData.bank)+'</b><br>'+escHtml(_bankData.acc)+'<br>'+escHtml(_bankData.name);
+    }else{
+      document.getElementById('bank-display').style.display='none';
+      document.getElementById('bank-form-popup').style.display='block';
+    }
+  }
+}
+function editBankInfo(){
+  document.getElementById('bank-display').style.display='none';
+  document.getElementById('bank-form-popup').style.display='block';
+  document.getElementById('pop-bank').value=_bankData.bank||'';
+  document.getElementById('pop-bank-acc').value=_bankData.acc||'';
+  document.getElementById('pop-bank-name').value=_bankData.name||'';
+}
+function saveBankInfo(){
+  var bank=document.getElementById('pop-bank').value.trim();
+  var acc=document.getElementById('pop-bank-acc').value.trim();
+  var name=document.getElementById('pop-bank-name').value.trim();
+  if(!bank&&!acc&&!name)return;
+  var okEl=document.getElementById('bank-save-ok');
+  okEl.style.display='block';
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res&&res.success){
+        _bankData={bank:bank,acc:acc,name:name};
+        setTimeout(function(){okEl.style.display='none';document.getElementById('bank-popup').style.display='none';},1500);
+      }
+    })
+    .withFailureHandler(function(){okEl.style.display='none';})
+    .updateUserBank({phone:currentUser.phone,bank:bank,bankAccount:acc,bankName:name});
+}
+
+// ── FORGOT PASSWORD ──────────────────────────────────────────
+function doForgotPassword(){
+  var name=document.getElementById('fg-name').value.trim();
+  var phone=document.getElementById('fg-phone').value.trim();
+  var errEl=document.getElementById('forgot-err');
+  var resEl=document.getElementById('forgot-result');
+  errEl.classList.add('hidden');resEl.style.display='none';
+  if(!name||!phone){errEl.textContent='Vui lòng nhập họ tên và số điện thoại.';errEl.classList.remove('hidden');return;}
+  var btn=document.querySelector('#forgot-form .btn-black');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Đang tìm...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      btn.disabled=false;btn.textContent='Xem mật khẩu';
+      if(res&&res.success){
+        document.getElementById('forgot-pass-display').textContent=res.password;
+        resEl.style.display='block';
+      }else{
+        errEl.textContent=res?res.msg:'Không tìm thấy tài khoản.';errEl.classList.remove('hidden');
+      }
+    })
+    .withFailureHandler(function(err){btn.disabled=false;btn.textContent='Xem mật khẩu';errEl.textContent='Lỗi: '+err.message;errEl.classList.remove('hidden');})
+    .findPassword({name:name,phone:phone});
+}
+
+// ── FIND CTV CODE ────────────────────────────────────────────
+function findCTVCode(){
+  var name=document.getElementById('find-ctv-name').value.trim();
+  var phone=document.getElementById('find-ctv-phone').value.trim();
+  var resEl=document.getElementById('find-ctv-result');
+  var invalidEl=document.getElementById('find-ctv-invalid');
+  var validEl=document.getElementById('find-ctv-valid');
+  resEl.style.display='none';invalidEl.style.display='none';validEl.style.display='none';
+  if(!name||!phone){alert('Vui lòng nhập họ tên và số điện thoại.');return;}
+  var btn=document.getElementById('mm-btn-find');
+  btn.disabled=true;btn.textContent='Đang tìm...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      btn.disabled=false;btn.textContent='Tìm';
+      resEl.style.display='block';
+      if(res&&res.success){validEl.style.display='block';document.getElementById('find-ctv-code-display').textContent=res.code;}
+      else{invalidEl.style.display='block';}
+    })
+    .withFailureHandler(function(){btn.disabled=false;btn.textContent='Tìm';resEl.style.display='block';invalidEl.style.display='block';})
+    .findCollaboratorCode({name:name,phone:phone});
+}
+</script>
+</body>
+</html>
