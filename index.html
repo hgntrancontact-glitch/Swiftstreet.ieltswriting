@@ -2209,33 +2209,50 @@ function doForgotPassword(){
   if(!name||!phone){errEl.textContent='Vui lòng nhập họ tên và số điện thoại.';errEl.classList.remove('hidden');return;}
   var btn=document.querySelector('#forgot-form .btn-black');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Đang tìm...';
-  google.script.run
-    .withSuccessHandler(function(res){
-      btn.disabled=false;btn.textContent='Xem mật khẩu';
-      if(res&&res.success){
-        document.getElementById('forgot-pass-display').textContent=res.password;
-        resEl.style.display='block';
-      }else{
-        errEl.textContent=res?res.msg:'Không tìm thấy tài khoản.';errEl.classList.remove('hidden');
-      }
-    })
-    .withFailureHandler(function(err){btn.disabled=false;btn.textContent='Xem mật khẩu';errEl.textContent='Lỗi: '+err.message;errEl.classList.remove('hidden');})
-    .findPassword({name:name,phone:phone});
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "findPassword", payload: { name: name, phone: phone } })
+  })
+  .then(res => res.json())
+  .then(res => {
+    btn.disabled = false; btn.textContent = 'Xem mật khẩu';
+    if (res && res.success) {
+      document.getElementById('forgot-pass-display').textContent = res.password;
+      resEl.style.display = 'block';
+    } else {
+      errEl.textContent = res ? res.msg : 'Không tìm thấy tài khoản.';
+      errEl.classList.remove('hidden');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false; btn.textContent = 'Xem mật khẩu';
+    errEl.textContent = 'Lỗi kết nối!'; errEl.classList.remove('hidden');
+  });
 }
 
 // ── FIND CTV CODE ────────────────────────────────────────────
 function findCTVCode(){
   var name=document.getElementById('find-ctv-name').value.trim();
   var phone=document.getElementById('find-ctv-phone').value.trim();
-  var resEl=document.getElementById('find-ctv-result');
-  var invalidEl=document.getElementById('find-ctv-invalid');
-  var validEl=document.getElementById('find-ctv-valid');
-  resEl.style.display='none';invalidEl.style.display='none';validEl.style.display='none';
-  if(!name||!phone){alert('Vui lòng nhập họ tên và số điện thoại.');return;}
-  var btn=document.getElementById('mm-btn-find');
-  btn.disabled=true;btn.textContent='Đang tìm...';
-  google.script.run
-    .withSuccessHandler(function(res){
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ action: "findCollaboratorCode", payload: { name: name, phone: phone } })
+  })
+  .then(res => res.json())
+  .then(res => {
+    btn.disabled = false; btn.textContent = 'Tìm';
+    resEl.style.display = 'block';
+    if (res && res.success) {
+      validEl.style.display = 'block';
+      document.getElementById('find-ctv-code-display').textContent = res.code;
+    } else {
+      invalidEl.style.display = 'block';
+    }
+  })
+  .catch(err => {
+    btn.disabled = false; btn.textContent = 'Tìm';
+    resEl.style.display = 'block'; invalidEl.style.display = 'block';
+  });
       btn.disabled=false;btn.textContent='Tìm';
       resEl.style.display='block';
       if(res&&res.success){validEl.style.display='block';document.getElementById('find-ctv-code-display').textContent=res.code;}
